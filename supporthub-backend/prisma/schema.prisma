@@ -1,0 +1,228 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRoleEnum {
+  super_admin
+  ticket_manager
+  developer
+  client
+}
+
+model Users {
+  id                  String               @id @default(uuid())
+  firstName           String
+  lastName            String
+  email               String               @unique
+  password            String?
+  provider            String?
+  providerId          String?
+  hasChangedPassword  Boolean              @default(false)
+  userRoles           UserRoles[]
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  deletedAt           DateTime?
+  Clients             Clients[]
+  Tickets             Tickets[]
+  UserTickets         UserTickets[]
+  IntegrationSettings IntegrationSettings?
+  TicketNotes         TicketNote[]
+  TicketComments      TicketComment[]
+}
+
+model Roles {
+  id        String       @id @default(uuid())
+  name      UserRoleEnum @unique
+  userRoles UserRoles[]
+}
+
+model UserRoles {
+  id        String   @id @default(uuid())
+  userId    String
+  roleId    String
+  user      Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      Roles    @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, roleId])
+}
+
+enum ProductStatus {
+  active
+  inactive
+}
+
+enum SupportTier {
+  premium
+  standard
+}
+
+enum ClientStatus {
+  active
+  inactive
+}
+
+model Products {
+  id             String          @id @default(uuid())
+  productCode    String          @unique
+  name           String
+  description    String?
+  status         ProductStatus   @default(active)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  clientProducts ClientProduct[]
+  Tickets        Tickets[]
+
+  @@map("Products")
+}
+
+model Clients {
+  id             String          @id @default(uuid())
+  clientCode     String          @unique
+  companyName    String?
+  companyDomain  String?
+  supportTier    SupportTier     @default(standard)
+  status         ClientStatus    @default(inactive)
+  createdBy      String          @default(uuid())
+  userId         String          @default(uuid())
+  deletedAt      DateTime?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  user           Users?          @relation(fields: [userId], references: [id])
+  clientProducts ClientProduct[]
+  Tickets        Tickets[]
+
+  @@map("Clients")
+}
+
+model ClientProduct {
+  id        String   @id @default(uuid())
+  clientId  String
+  productId String
+  client    Clients  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  product   Products @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([clientId, productId])
+  @@map("ClientProduct")
+}
+
+enum StatusEnum {
+  in_progress
+  new
+  assigned
+  awaiting_client
+  resolved
+}
+
+enum PriorityEnum {
+  medium
+  low
+  high
+  critical
+}
+
+model Tickets {
+  id            String        @id @default(uuid())
+  ticketCode    String        @unique
+  title         String
+  status        StatusEnum    @default(in_progress)
+  priority      PriorityEnum  @default(medium)
+  description   String?
+  createdBy     String?
+  imageUrl      String?
+  internalNotes String?
+  tags          String[]      @default([])
+  dueDate       DateTime?
+  priorityScore   Float?        @default(0)
+  emotionScore    Float?
+  complexityScore Float?
+  agingScore      Float?
+  llmReasoning    String?
+  confidence      Float?
+  lastScoredAt    DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  owner         Users?        @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  UserTickets   UserTickets[]
+
+  clientId  String?
+  productId String?
+  client    Clients?  @relation(fields: [clientId], references: [id])
+  product   Products? @relation(fields: [productId], references: [id])
+
+  TicketAttachments TicketAttachment[]
+  TicketNotes       TicketNote[]
+  TicketComments    TicketComment[]
+
+  @@map("Tickets")
+}
+
+model TicketAttachment {
+  id        String   @id @default(uuid())
+  ticketId  String
+  fileUrl   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ticket Tickets @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@map("TicketAttachments")
+}
+
+model UserTickets {
+  id        String   @id @default(uuid())
+  userId    String
+  ticketId  String
+  user      Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ticket    Tickets  @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  clientId  String?
+
+  @@unique([userId, ticketId])
+  @@map("UserTickets")
+}
+
+model TicketComment {
+  id        String   @id @default(uuid())
+  ticketId  String
+  userId    String
+  text      String
+  createdAt DateTime @default(now())
+
+  ticket Tickets @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  user   Users   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("TicketComments")
+}
+
+model TicketNote {
+  id        String   @id @default(uuid())
+  ticketId  String
+  userId    String
+  text      String
+  createdAt DateTime @default(now())
+
+  ticket Tickets @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  user   Users   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("TicketNotes")
+}
+
+model IntegrationSettings {
+  id                String   @id @default(uuid())
+  userId            String   @unique
+  slackWebhookUrl   String
+  newTickets        Boolean  @default(false)
+  ticketAssignments Boolean  @default(false)
+  statusChanges     Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user Users @relation(fields: [userId], references: [id], onDelete: Cascade)
+}

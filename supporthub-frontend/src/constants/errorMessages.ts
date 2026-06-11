@@ -1,0 +1,32 @@
+export const ERROR_MESSAGES = {
+  UNAUTHORIZED: 'You must be logged in to perform this action',
+  FORBIDDEN: 'You do not have permission to perform this action',
+  PRODUCT_NOT_FOUND: 'Product not found',
+  PRODUCT_CREATE_FAILED: 'Failed to create product',
+  PRODUCT_UPDATE_FAILED: 'Failed to update product',
+  PRODUCT_DELETE_FAILED: 'Failed to delete product',
+  PRODUCT_FETCH_FAILED: 'Failed to fetch products',
+  TICKET_NOT_FOUND: 'Ticket not found',
+  TICKET_CREATE_FAILED: 'Failed to create ticket',
+  TICKET_UPDATE_FAILED: 'Failed to update ticket',
+  TICKET_DELETE_FAILED: 'Failed to delete ticket',
+  TICKET_FETCH_FAILED: 'Failed to fetch tickets. Please try again.',
+  TICKETS_FETCH_FAILED: 'Failed to fetch tickets',
+  CLIENT_NOT_FOUND: 'Client not found',
+  CLIENT_ADD_FAILED: 'Failed to add client to product',
+  CLIENT_REMOVE_FAILED: 'Failed to remove client from product',
+  INVALID_STATUS: 'Invalid status value',
+  INVALID_PRODUCT_DATA: 'Invalid product data provided',
+  INVALID_CLIENT_CODE: 'Invalid client code provided',
+  INVALID_TICKET_DATA: 'Invalid ticket data provided',
+  INVALID_TICKET_ID: 'Invalid ticket ID provided',
+  NETWORK_ERROR: 'Network error occurred',
+  UNKNOWN_ERROR: 'An unexpected error occurred',
+  USER_ID_MISSING_IN_REQUEST: 'User ID missing in request',
+  COMPANY_NAME_REQUIRED: 'companyName is required',
+} as const;
+
+export const RESPONSE_STATUS = {
+  SUCCESS: 'success',
+  ERROR: 'error',
+} as const;

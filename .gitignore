@@ -1,0 +1,10 @@
+# Ignore everything by default
+/*
+
+# Except the service directories
+!/supporthub-backend/
+!/supporthub-frontend/
+!/SupportHub-ml/
+
+# And this file itself
+!/.gitignore
