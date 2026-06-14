@@ -7,6 +7,7 @@ export const TICKET_STATUS_OPTIONS: SelectOption[] = [
   { value: 'assigned', label: 'Assigned' },
   { value: 'awaiting_client', label: 'Awaiting Client' },
   { value: 'resolved', label: 'Resolved' },
+  { value: 'closed', label: 'Closed' },
 ]
 
 export const TICKET_PRIORITY_OPTIONS: SelectOption[] = [

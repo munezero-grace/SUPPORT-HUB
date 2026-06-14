@@ -136,7 +136,7 @@ export default function MyTasksPage() {
     {
       header: 'Priority Score',
       accessor: (t: AssignedTicket) => (
-        <PriorityScoreBadge score={t.priorityScore} confidence={t.confidence} />
+        <PriorityScoreBadge score={t.priorityScore} confidence={t.confidence} priority={t.priority} />
       ),
     },
     {

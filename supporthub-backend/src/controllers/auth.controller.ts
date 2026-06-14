@@ -1,8 +1,10 @@
 import { Request, Response } from "express";
 import * as bcrypt from "bcryptjs";
+import { TokenExpiredError } from "jsonwebtoken";
 import prisma from "../lib/prisma";
 import { generateToken } from "../helpers/generateToken";
 import { generateClientCode } from "../helpers/generateClientCode";
+import { verifySetPasswordToken, SET_PASSWORD_PURPOSE } from "../helpers/setPasswordToken";
 import { ERROR_MESSAGES } from "../constants/response/errors";
 import { SUCCESS_MESSAGES } from "../constants/response/successMessages";
 import { UserRole } from "../types";
@@ -179,6 +181,66 @@ class AuthController {
     } catch (error: any) {
       return res.status(HTTP_BAD_REQUEST).json({
         error: error.message
+      });
+    }
+  };
+
+  public setPassword = async (req: Request, res: Response) => {
+    try {
+      const { token, newPassword } = req.body;
+
+      let payload;
+      try {
+        payload = verifySetPasswordToken(token);
+      } catch (err) {
+        if (err instanceof TokenExpiredError) {
+          return res.status(HTTP_BAD_REQUEST).json({
+            message: ERROR_MESSAGES.SET_PASSWORD_TOKEN_INVALID,
+          });
+        }
+        return res.status(HTTP_BAD_REQUEST).json({
+          message: ERROR_MESSAGES.SET_PASSWORD_TOKEN_INVALID,
+        });
+      }
+
+      if (payload.purpose !== SET_PASSWORD_PURPOSE || !payload.userId) {
+        return res.status(HTTP_BAD_REQUEST).json({
+          message: ERROR_MESSAGES.SET_PASSWORD_TOKEN_INVALID,
+        });
+      }
+
+      const user = await prisma.users.findUnique({
+        where: { id: payload.userId },
+      });
+
+      if (!user) {
+        return res.status(HTTP_BAD_REQUEST).json({
+          message: ERROR_MESSAGES.SET_PASSWORD_TOKEN_INVALID,
+        });
+      }
+
+      if (user.hasChangedPassword) {
+        return res.status(HTTP_BAD_REQUEST).json({
+          message: ERROR_MESSAGES.SET_PASSWORD_LINK_USED,
+        });
+      }
+
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+      await prisma.users.update({
+        where: { id: user.id },
+        data: {
+          password: hashedPassword,
+          hasChangedPassword: true,
+        },
+      });
+
+      return res.status(HTTP_OK).json({
+        message: SUCCESS_MESSAGES.PASSWORD_SET_SUCCESS,
+      });
+    } catch (error: any) {
+      return res.status(HTTP_BAD_REQUEST).json({
+        message: error.message || ERROR_MESSAGES.SET_PASSWORD_TOKEN_INVALID,
       });
     }
   };

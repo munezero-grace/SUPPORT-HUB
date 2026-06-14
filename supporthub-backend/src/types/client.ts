@@ -7,6 +7,7 @@ export interface CreateClientDto {
   supportTier?: SupportTier;
   status?: ClientStatus;
   userId?: string;
+  productIds?: string[];
 }
 
 export interface SocialClientDto {

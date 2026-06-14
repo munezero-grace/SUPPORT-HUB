@@ -60,12 +60,28 @@ export interface FormData {
   estimatedTime: string
   tags: string
   internalNotes: string
+  category?: string
 }
 
 export interface SelectOption {
   label: string
   value: string
 }
+
+// Roles allowed to see ML scoring information (priority score, confidence,
+// AI reasoning, aging score). Clients must never see these fields.
+export const STAFF_ROLES = ['ticket_manager', 'developer', 'super_admin']
+
+export const CATEGORY_OPTIONS: SelectOption[] = [
+  { label: 'Select category', value: '' },
+  { label: 'Technical Issue', value: 'Technical Issue' },
+  { label: 'Billing & Payments', value: 'Billing & Payments' },
+  { label: 'Account Access', value: 'Account Access' },
+  { label: 'Feature Request', value: 'Feature Request' },
+  { label: 'Bug Report', value: 'Bug Report' },
+  { label: 'General Inquiry', value: 'General Inquiry' },
+  { label: 'Other', value: 'Other' },
+]
 
 export interface AdvancedProps {
   formData: FormData
@@ -103,6 +119,64 @@ export interface TicketDetailsProps {
   setFormData: React.Dispatch<React.SetStateAction<FormData>>
   handleFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void
   removeFile: (index: number) => void
+}
+
+export interface StepDefinition {
+  number: number
+  label: string
+}
+
+export interface StepIndicatorProps {
+  steps: StepDefinition[]
+  currentStep: number
+  completedSteps: number[]
+  onStepClick: (step: number) => void
+}
+
+export interface RequestDetailsStepProps {
+  formData: FormData
+  handleInputChange: (field: keyof FormData, value: string) => void
+  productOptions: SelectOption[]
+  priorityOptions: SelectOption[]
+  isAdmin: boolean
+  availableClients: Client[]
+  setFormData: React.Dispatch<React.SetStateAction<FormData>>
+}
+
+export interface TicketFormStepProps {
+  formData: FormData
+  handleInputChange: (field: keyof FormData, value: string) => void
+  isAdmin: boolean
+  setFormData: React.Dispatch<React.SetStateAction<FormData>>
+}
+
+export interface UploadDocumentsStepProps {
+  uploadedFiles: UploadedFile[]
+  handleFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void
+  removeFile: (index: number) => void
+}
+
+export interface CreatedTicketSummary {
+  status?: string
+  title?: string
+  description?: string
+  assignee?: string
+  priorityScore?: number
+  confidence?: number
+  llmReasoning?: string
+  agingScore?: number
+}
+
+export interface ReviewSubmitStepProps {
+  formData: FormData
+  uploadedFiles: UploadedFile[]
+  productOptions: SelectOption[]
+  isAdmin: boolean
+  isStaff: boolean
+  loading: boolean
+  submitted: boolean
+  createdTicket: CreatedTicketSummary | null
+  onSubmit: () => void
 }
 
 export interface TicketUpdateData {

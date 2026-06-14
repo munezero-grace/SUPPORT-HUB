@@ -26,7 +26,7 @@ const STATUS_OPTIONS = [
 
 const SUPPORT_TIER_OPTIONS = [
     { value: SupportTier.Standard, label: 'Standard' },
-    { value: SupportTier.Premium, label: 'Premium' },
+    { value: SupportTier.Premium, label: 'Enterprise' },
 ];
 
 export function ClientFormModal({
@@ -131,7 +131,7 @@ export function ClientFormModal({
                     </FormField>
 
                     <FormField
-                        label="Support Tier"
+                        label="Client Type"
                         error={form.formState.errors.supportTier?.message}
                         required
                     >

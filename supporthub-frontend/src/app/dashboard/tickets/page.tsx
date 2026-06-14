@@ -2,7 +2,7 @@
 import type { Ticket } from '@/types/interfaces/interface'
 import React, { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useNotifications } from '@/context/NotificationContext'
 import { Button } from '@/components/ui/Button'
 import { ticketService } from '@/services/tickets.service'
@@ -26,12 +26,14 @@ const PAGE_SIZE = 10
 export default function TicketsPage() {
   const { data: session } = useSession()
   const { addNotification } = useNotifications()
+  const searchParams = useSearchParams()
   const [tickets, setTickets] = useState<Ticket[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false)
   const [filterValues, setFilterValues] = useState({
-    status: '',
+    status: searchParams.get('status') ?? '',
     priority: '',
+    client: searchParams.get('client') ?? '',
   })
   const [sortByScore, setSortByScore] = useState<'none' | 'desc' | 'asc'>('desc')
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
@@ -42,6 +44,7 @@ export default function TicketsPage() {
   const [currentPage, setCurrentPage] = useState(1)
 
   const isAdmin = session?.user?.role === 'super_admin' || session?.user?.role === 'ticket_manager'
+  const canSeePriorityScore = session?.user?.role === 'super_admin' || session?.user?.role === 'ticket_manager' || session?.user?.role === 'developer'
   const currentUserId = session?.user?.id
   const router = useRouter()
 
@@ -113,27 +116,29 @@ export default function TicketsPage() {
       !filterValues.priority ||
       ticket.priority.toLowerCase() === filterValues.priority.toLowerCase()
 
-    return matchesSearch && matchesStatus && matchesPriority
+    const matchesClient =
+      !filterValues.client ||
+      (typeof ticket.client === 'object' &&
+        ticket.client?.clientCode === filterValues.client)
+
+    return matchesSearch && matchesStatus && matchesPriority && matchesClient
   })
 
-  const getScoreTier = (score: number | null | undefined): number => {
-    if (score == null) return -1
-    if (score >= 0.75) return 3
-    if (score >= 0.50) return 2
-    if (score >= 0.25) return 1
-    return 0
-  }
+  const PRIORITY_TIER: Record<string, number> = { critical: 3, high: 2, medium: 1, low: 0 }
+
+  const getPriorityTier = (priority: string | null | undefined): number =>
+    PRIORITY_TIER[priority?.toLowerCase() ?? ''] ?? -1
 
   const sortedTickets = sortByScore === 'none'
     ? filteredTickets
     : [...filteredTickets].sort((a, b) => {
-        const aScore = typeof a.priorityScore === 'number' ? a.priorityScore : null
-        const bScore = typeof b.priorityScore === 'number' ? b.priorityScore : null
-        const aTier = getScoreTier(aScore)
-        const bTier = getScoreTier(bScore)
+        const aTier = getPriorityTier(a.priority)
+        const bTier = getPriorityTier(b.priority)
         if (aTier !== bTier) {
           return sortByScore === 'desc' ? bTier - aTier : aTier - bTier
         }
+        const aScore = typeof a.priorityScore === 'number' ? a.priorityScore : null
+        const bScore = typeof b.priorityScore === 'number' ? b.priorityScore : null
         if (aScore === null && bScore === null) return 0
         if (aScore === null) return 1
         if (bScore === null) return -1
@@ -149,11 +154,11 @@ export default function TicketsPage() {
       const data = await ticketService.getUserTickets()
       const mappedTickets: Ticket[] = mapTickets(data)
       setTickets(mappedTickets)
-      if (ticketTitle) {
+      if (ticketTitle && ticketCode) {
         addNotification({
           type: 'new_ticket',
-          title: 'New Ticket',
-          description: `"${ticketTitle}" has been submitted.`,
+          title: 'Ticket Received',
+          description: `Your request ${ticketCode} has been received. Our team will review it and respond as soon as possible.`,
           ticketCode,
         })
       }
@@ -174,6 +179,7 @@ export default function TicketsPage() {
     onAssign: isAdmin ? handleAssignTicket : undefined,
     currentUserId,
     isAdmin,
+    showPriorityScore: canSeePriorityScore,
   })
 
   return (
@@ -216,24 +222,26 @@ export default function TicketsPage() {
             placeholder="Search tickets..."
             onFilterClick={() => setIsFilterModalOpen(true)}
           />
-          <div className="px-4 pb-3 flex items-center gap-2 border-t border-gray-100 pt-3">
-            <span className="text-xs font-medium text-gray-500">Sort by priority score:</span>
-            <div className="flex gap-1">
-              {(['none', 'desc', 'asc'] as const).map((val) => (
-                <button
-                  key={val}
-                  onClick={() => { setSortByScore(val); setCurrentPage(1) }}
-                  className={`text-xs px-3 py-1 rounded-full border transition-colors ${
-                    sortByScore === val
-                      ? 'bg-gray-900 text-white border-gray-900'
-                      : 'bg-white text-gray-600 border-gray-300 hover:border-gray-400'
-                  }`}
-                >
-                  {val === 'none' ? 'Default' : val === 'desc' ? 'Highest first' : 'Lowest first'}
-                </button>
-              ))}
+          {canSeePriorityScore && (
+            <div className="px-4 pb-3 flex items-center gap-2 border-t border-gray-100 pt-3">
+              <span className="text-xs font-medium text-gray-500">Sort by priority score:</span>
+              <div className="flex gap-1">
+                {(['none', 'desc', 'asc'] as const).map((val) => (
+                  <button
+                    key={val}
+                    onClick={() => { setSortByScore(val); setCurrentPage(1) }}
+                    className={`text-xs px-3 py-1 rounded-full border transition-colors ${
+                      sortByScore === val
+                        ? 'bg-gray-900 text-white border-gray-900'
+                        : 'bg-white text-gray-600 border-gray-300 hover:border-gray-400'
+                    }`}
+                  >
+                    {val === 'none' ? 'Default' : val === 'desc' ? 'Highest first' : 'Lowest first'}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
           {isFilterModalOpen && (
             <FilterModal
               isOpen={isFilterModalOpen}
@@ -259,6 +267,18 @@ export default function TicketsPage() {
             />
           )}
         </div>
+
+        {filterValues.client && (
+          <div className="px-4 py-2 bg-blue-50 border-t border-blue-100 flex items-center justify-between text-sm text-blue-800">
+            <span>Showing tickets for client: <strong>{filterValues.client}</strong></span>
+            <button
+              onClick={() => setFilterValues((prev) => ({ ...prev, client: '' }))}
+              className="text-blue-600 hover:text-blue-800 font-medium ml-4"
+            >
+              Clear filter
+            </button>
+          </div>
+        )}
 
         <div className="p-4 overflow-hidden">
           <div className="overflow-x-auto">

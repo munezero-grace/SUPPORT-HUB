@@ -107,6 +107,7 @@ export class DashboardService {
 
     const grouped = {
       new: ticketsByStatus.filter((t) => t.status === "new"),
+      assigned: ticketsByStatus.filter((t) => t.status === "assigned"),
       in_progress: ticketsByStatus.filter((t) => t.status === "in_progress"),
       awaiting_client: ticketsByStatus.filter(
         (t) => t.status === "awaiting_client"

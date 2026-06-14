@@ -54,6 +54,17 @@ const UsersSettings = () => {
     },
   })
 
+  const resendInviteMutation = useMutation({
+    mutationFn: (user: User) => userService.resendInvite(user.id),
+    onSuccess: () => {
+      toast.success('Invite email sent successfully')
+    },
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { message?: string } }; message?: string }
+      toast.error(err?.response?.data?.message || err?.message || 'Error sending invite')
+    },
+  })
+
   const columns = [
     {
       header: 'Name',
@@ -94,15 +105,17 @@ const UsersSettings = () => {
     },
     {
       header: 'Actions',
-      accessor: (user: User) => (
-        <ActionMenu
-          items={
-            user.deletedAt
-              ? [{ label: 'Reactivate', onClick: () => reactivateMutation.mutate(user) }]
-              : [{ label: 'Deactivate', variant: 'danger' as const, onClick: () => setConfirmUser(user) }]
-          }
-        />
-      ),
+      accessor: (user: User) => {
+        const items: { label: string; variant?: 'default' | 'danger'; onClick: () => void }[] = user.deletedAt
+          ? [{ label: 'Reactivate', onClick: () => reactivateMutation.mutate(user) }]
+          : [{ label: 'Deactivate', variant: 'danger', onClick: () => setConfirmUser(user) }]
+
+        if (!user.deletedAt && !user.hasChangedPassword) {
+          items.unshift({ label: 'Resend Invite', variant: 'default' as const, onClick: () => resendInviteMutation.mutate(user) })
+        }
+
+        return <ActionMenu items={items} />
+      },
     },
   ]
 

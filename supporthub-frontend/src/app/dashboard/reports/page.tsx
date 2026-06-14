@@ -103,6 +103,7 @@ export default function ReportsPage() {
   // Chart 2: priority bar data
   const allTickets: TicketItem[] = [
     ...(tickets?.new ?? []),
+    ...(tickets?.assigned ?? []),
     ...(tickets?.in_progress ?? []),
     ...(tickets?.awaiting_client ?? []),
     ...(tickets?.resolved ?? []),
@@ -233,7 +234,7 @@ export default function ReportsPage() {
           <div className="space-y-3">
             <SummaryRow label="Total Clients"   value={clients?.totalClients ?? 0} />
             <SummaryRow label="Active Clients"  value={clients?.activeClients ?? 0} />
-            <SummaryRow label="Premium Clients" value={clients?.premiumClients ?? 0} />
+            <SummaryRow label="Inactive Clients" value={(clients?.totalClients ?? 0) - (clients?.activeClients ?? 0)} />
           </div>
         </div>
 

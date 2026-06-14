@@ -1,5 +1,7 @@
 import type { AxiosRequestConfig } from 'axios'
 export interface Client {
+  id?: string
+  clientCode?: string
   companyName: string
   contactName: string
   contactEmail: string

@@ -6,8 +6,8 @@ export const ticketSchema = Joi.object({
   description: Joi.string().min(2).max(1000).required(),
   product: Joi.string().required(),
   status: Joi.string()
-    .valid("in_progress", "new", "assigned", "awaiting_client", "resolved")
-    .default("in_progress"),
+    .valid("in_progress", "new", "assigned", "awaiting_client", "resolved", "closed")
+    .default("new"),
   priority: Joi.string()
     .valid("medium", "low", "high", "critical")
     .default("medium"),
@@ -24,7 +24,7 @@ export const updateTicketSchema = Joi.object({
   description: Joi.string().min(2).max(1000).optional(),
   product: Joi.string().optional(),
   status: Joi.string()
-    .valid("in_progress", "new", "assigned", "awaiting_client", "resolved")
+    .valid("in_progress", "new", "assigned", "awaiting_client", "resolved", "closed")
     .optional(),
   priority: Joi.string().valid("medium", "low", "high", "critical").optional(),
   client: Joi.string().optional(),

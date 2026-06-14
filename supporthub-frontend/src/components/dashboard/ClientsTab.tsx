@@ -44,11 +44,11 @@ export default function ClientsTab({ data, loading }: ClientsTabProps) {
       icon: <UsersIcon className="w-5 h-5 text-gray-400" />,
     },
     {
-      name: 'Premium Clients',
-      value: data.premiumClients,
-      change: '+1',
-      changeType: 'increase' as const,
-      info: 'from last month',
+      name: 'Inactive Clients',
+      value: data.totalClients - data.activeClients,
+      change: 'No change',
+      changeType: 'neutral' as const,
+      info: 'not currently active',
       icon: <UsersIcon className="w-5 h-5 text-gray-400" />,
     },
   ]

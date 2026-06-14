@@ -9,8 +9,8 @@ export const userService = {
     firstName: string
     lastName: string
     email: string
-    password: string
     role: string
+    specialty?: string
     clientId?: string
   }) {
     const response = await axiosInstance.post('/users', data)
@@ -21,6 +21,10 @@ export const userService = {
   },
   async reactivate(userId: string) {
     await axiosInstance.post(`/users/${userId}/restore`)
+  },
+  async resendInvite(userId: string) {
+    const response = await axiosInstance.post(`/users/${userId}/resend-invite`)
+    return response.data
   },
   async getTeamMembers() {
     const response = await axiosInstance.get('/users/team')

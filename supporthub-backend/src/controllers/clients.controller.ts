@@ -15,7 +15,17 @@ export class ClientController {
   static async createClient(req: Request, res: Response): Promise<Response> {
     try {
       const clientData: CreateClientDto = req.body;
+      if (!Array.isArray(clientData.productIds) || clientData.productIds.length === 0) {
+        return res.status(HTTP_BAD_REQUEST).json({
+          error: "A client must have at least one product assigned",
+        });
+      }
       const client = await clientService.createClient(clientData);
+      if ("error" in client) {
+        return res.status(HTTP_BAD_REQUEST).json({
+          error: client.error,
+        });
+      }
       return res.status(HTTP_CREATED).json({
         message: SUCCESS_MESSAGES.CLIENT_CREATED,
         data: client,

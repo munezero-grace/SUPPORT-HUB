@@ -3,6 +3,7 @@ import { ClientService } from "./client.service";
 import { ERROR_MESSAGES } from "../constants/response/errors";
 import { sendSlackNotification } from "../utils/slackNotifier";
 import { getUserRole } from "../helpers/getUserRole";
+import { UserRole } from "../types";
 import { CreateTicketData } from "../types/ticket";
 import { buildTicketData } from "../utils/ticketData";
 import {
@@ -13,6 +14,7 @@ import { uploadTicketFiles } from "../helpers/ticketFileHelper";
 import {
   buildSlackTicketMessage,
   buildSlackStatusChangeMessage,
+  buildSlackNewTicketMessage,
 } from "../helpers/slackHelper";
 import SettingsService from "./settings.service";
 import {
@@ -49,6 +51,129 @@ export class TicketsService {
    * hourly priorityRefresh cron job will pick up any ticket that's still
    * unscored.
    */
+  private static async getClientUserIdForTicket(ticketId: string): Promise<string | null> {
+    const ticket = await prisma.tickets.findUnique({
+      where: { id: ticketId },
+      include: { client: { select: { userId: true } } },
+    });
+    return ticket?.client?.userId ?? null;
+  }
+
+  private static async createStatusChangeNotifications(
+    ticketId: string,
+    ticketCode: string,
+    ticketTitle: string,
+    newStatus: string
+  ): Promise<void> {
+    const CLIENT_MESSAGES: Record<string, string> = {
+      in_progress:      `Your ticket [${ticketCode}] is now being reviewed by our support team.`,
+      awaiting_client:  `Your ticket [${ticketCode}] requires more information from you. Please check the ticket for details.`,
+      resolved:         `Your ticket [${ticketCode}] has been resolved. Please review and confirm the resolution.`,
+    };
+
+    const clientUserId = await TicketsService.getClientUserIdForTicket(ticketId);
+    const clientMsg = CLIENT_MESSAGES[newStatus];
+    if (clientUserId && clientMsg) {
+      await prisma.notification.create({
+        data: {
+          userId: clientUserId,
+          type: "status_change",
+          title: "Ticket Status Updated",
+          body: clientMsg,
+          ticketCode,
+        },
+      });
+    }
+
+    const admins = await prisma.userRoles.findMany({
+      where: { role: { name: { in: ["super_admin", "ticket_manager"] } } },
+      select: { userId: true },
+    });
+    if (admins.length === 0) return;
+    const label = newStatus.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+    await prisma.notification.createMany({
+      data: admins.map(({ userId }) => ({
+        userId,
+        type: "status_change",
+        title: "Ticket Status Changed",
+        body: `[${ticketCode}] "${ticketTitle}" → ${label}`,
+        ticketCode,
+      })),
+      skipDuplicates: true,
+    });
+  }
+
+  private static async createCommentNotification(
+    ticketId: string,
+    ticketCode: string,
+    commenterRole: string
+  ): Promise<void> {
+    const isClient = commenterRole === UserRole.CLIENT;
+
+    if (!isClient) {
+      const clientUserId = await TicketsService.getClientUserIdForTicket(ticketId);
+      if (clientUserId) {
+        await prisma.notification.create({
+          data: {
+            userId: clientUserId,
+            type: "new_ticket",
+            title: "New Reply on Your Ticket",
+            body: `A new message was added to your ticket [${ticketCode}].`,
+            ticketCode,
+          },
+        });
+      }
+    } else {
+      const [assignedDevs, admins] = await Promise.all([
+        prisma.userTickets.findMany({ where: { ticketId }, select: { userId: true } }),
+        prisma.userRoles.findMany({
+          where: { role: { name: { in: ["super_admin", "ticket_manager"] } } },
+          select: { userId: true },
+        }),
+      ]);
+      const allIds = [...new Set([
+        ...assignedDevs.map((d) => d.userId),
+        ...admins.map((a) => a.userId),
+      ])];
+      if (allIds.length > 0) {
+        await prisma.notification.createMany({
+          data: allIds.map((userId) => ({
+            userId,
+            type: "new_ticket",
+            title: "Client Replied",
+            body: `Client replied on ticket [${ticketCode}].`,
+            ticketCode,
+          })),
+          skipDuplicates: true,
+        });
+      }
+    }
+  }
+
+  private static async createAdminNotifications(
+    ticketCode: string,
+    title: string,
+    clientName: string,
+    priority: string
+  ): Promise<void> {
+    const admins = await prisma.userRoles.findMany({
+      where: { role: { name: { in: ["super_admin", "ticket_manager"] } } },
+      select: { userId: true },
+    });
+    if (admins.length === 0) return;
+    const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+    await prisma.notification.createMany({
+      data: admins.map(({ userId }) => ({
+        userId,
+        type: "new_ticket",
+        title: `New ticket from ${clientName}`,
+        body: `[${ticketCode}]: ${title} — Priority: ${cap(priority)}`,
+        ticketCode,
+      })),
+      skipDuplicates: true,
+    });
+  }
+
   private static queueBackgroundScoring(
     ticket: {
       id: string;
@@ -69,18 +194,13 @@ export class TicketsService {
           createdAt: ticket.createdAt,
         });
 
-        const LOW_CONFIDENCE_THRESHOLD = 0.5;
-        const llmReasoning =
-          score.confidence < LOW_CONFIDENCE_THRESHOLD
-            ? `⚠️ Low confidence — recommend manual review. ${score.llmReasoning}`
-            : score.llmReasoning;
-
         const data: Record<string, unknown> = {
+          priority:        score.priority as "critical" | "high" | "medium" | "low",
           priorityScore:   score.priorityScore,
           emotionScore:    score.emotion,
           complexityScore: score.complexity,
           agingScore:      score.agingScore,
-          llmReasoning,
+          llmReasoning:    score.llmReasoning,
           confidence:      score.confidence,
           lastScoredAt:    new Date(),
         };
@@ -96,8 +216,51 @@ export class TicketsService {
         await prisma.tickets.update({ where: { id: ticket.id }, data });
 
         console.log(
-          `[scoring] ticket ${ticket.ticketCode} scored successfully — priority: ${score.priority.toUpperCase()}`
+          `[scoring] ticket ${ticket.ticketCode} scored — priority: ${score.priority.toUpperCase()}`
         );
+
+        // Create in-app notifications for admins/ticket managers and send Slack — all post-scoring
+        try {
+          const full = await prisma.tickets.findUnique({
+            where: { id: ticket.id },
+            include: {
+              client: { select: { companyName: true } },
+              owner:  { select: { firstName: true, lastName: true } },
+            },
+          });
+          const clientName = full?.client?.companyName || "Unknown";
+          const userName   = full?.owner
+            ? `${full.owner.firstName} ${full.owner.lastName}`
+            : "Unknown";
+
+          await TicketsService.createAdminNotifications(
+            ticket.ticketCode,
+            ticket.title,
+            clientName,
+            score.priority
+          );
+
+          // Slack — sent for ALL tickets after scoring so priority + score are accurate
+          try {
+            const adminSettings = await SettingsService.getAdminSlackSettings();
+            if (adminSettings?.newTickets && adminSettings.slackWebhookUrl) {
+              const slackMsg = buildSlackNewTicketMessage({
+                ticketCode:    ticket.ticketCode,
+                title:         ticket.title,
+                priority:      score.priority,
+                priorityScore: score.priorityScore,
+                clientName,
+                userName,
+                createdAt:     ticket.createdAt,
+              });
+              await sendSlackNotification(slackMsg, adminSettings.userId);
+            }
+          } catch (slackErr) {
+            console.error(`[scoring] Slack notification failed for ${ticket.ticketCode}:`, slackErr);
+          }
+        } catch (notifErr) {
+          console.error(`[scoring] post-score notifications failed for ${ticket.ticketCode}:`, notifErr);
+        }
       } catch (e) {
         console.error(
           `[scoring] ticket ${ticket.ticketCode} scoring failed — will retry on next cron run:`,
@@ -394,26 +557,8 @@ export class TicketsService {
         return { error: ticketResult?.error };
       }
 
-      // Send Slack notification (non-blocking - don't fail if it errors)
-      try {
-        const adminSettings = await SettingsService.getAdminSlackSettings();
-        if (adminSettings && adminSettings.newTickets && adminSettings.slackWebhookUrl) {
-          const userService = new (require("../services/user.service").UserService)();
-          const creator = await userService.getUserById(userId);
-          const userName = creator ? `${creator.firstName} ${creator.lastName}` : "Unknown";
-          const product = ticketResult.productId
-            ? await prisma.products.findUnique({ where: { id: ticketResult.productId } })
-            : null;
-          const slackMessage = buildSlackTicketMessage(
-            { ...ticketResult, description: ticketResult.description ?? undefined },
-            product ? product : {},
-            userName
-          );
-          await sendSlackNotification(slackMessage, adminSettings.userId);
-        }
-      } catch (slackError) {
-        console.error("Slack notification error:", slackError);
-      }
+      // Slack notification and in-app admin alerts are sent after ML scoring completes
+      // (inside queueBackgroundScoring) so priority and score are included.
 
       return { data: ticketResult };
     } catch (error: any) {
@@ -562,6 +707,17 @@ export class TicketsService {
           } catch (slackError) {
             console.error("Slack status notification error:", slackError);
           }
+
+          // In-app DB notifications for status change (client + admins)
+          try {
+            const tc = oldTicket?.ticketCode ?? "";
+            const tt = oldTicket?.title ?? "Ticket";
+            if (tc) {
+              await TicketsService.createStatusChangeNotifications(id, tc, tt, body.status);
+            }
+          } catch (notifErr) {
+            console.error("Status change DB notification error:", notifErr);
+          }
         }
         return { data: ticket };
       } catch (error: any) {
@@ -606,6 +762,16 @@ export class TicketsService {
       data: { ticketId, userId, text },
       include: { user: { select: { id: true, firstName: true, lastName: true } } },
     });
+
+    setImmediate(async () => {
+      try {
+        const commenterRole = await getUserRole(userId);
+        await TicketsService.createCommentNotification(ticketId, ticket.ticketCode, commenterRole);
+      } catch (e) {
+        console.error(`[comment] notification failed for ticket ${ticket.ticketCode}:`, e);
+      }
+    });
+
     return { data: comment };
   }
 
@@ -668,6 +834,21 @@ export class TicketsService {
         product: { select: { name: true } },
       },
     });
+
+    // In-app notification for the assigned developer
+    try {
+      await prisma.notification.create({
+        data: {
+          userId: assigneeId,
+          type: "ticket_assigned",
+          title: "Ticket Assigned to You",
+          body: `You have been assigned ticket [${ticket.ticketCode}] — "${ticket.title}".`,
+          ticketCode: ticket.ticketCode,
+        },
+      });
+    } catch (e) {
+      console.error("Assignment notification error:", e);
+    }
 
     // Slack notification (non-blocking)
     try {

@@ -106,6 +106,7 @@ export default function TicketDetailsPage({ params }: PageProps) {
     const { user } = useCurrentUser();
     const isAdmin = user?.role === 'super_admin' || user?.role === 'ticket_manager'
     const canSeeNotes = user?.role === 'super_admin' || user?.role === 'ticket_manager' || user?.role === 'developer'
+    const canUpdateStatus = canSeeNotes
     const { addNotification } = useNotifications()
     const { data: response, isLoading } = useQuery<{ data: Ticket } | Ticket>({
         queryKey: ['ticket', ticketId],
@@ -322,17 +323,19 @@ export default function TicketDetailsPage({ params }: PageProps) {
                                     </span>
                                 </div>
 
-                                <div className="flex flex-col gap-2">
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-sm font-bold text-gray-600">Priority Score</span>
-                                        {ticket.lastScoredAt && (
-                                            <span className="text-[10px] text-gray-400">
-                                                scored {formatDate(ticket.lastScoredAt)}
-                                            </span>
-                                        )}
+                                {canSeeNotes && (
+                                    <div className="flex flex-col gap-2">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-sm font-bold text-gray-600">Priority Score</span>
+                                            {ticket.lastScoredAt && (
+                                                <span className="text-[10px] text-gray-400">
+                                                    scored {formatDate(ticket.lastScoredAt)}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <PriorityScoreBadge score={ticket.priorityScore} confidence={ticket.confidence} llmReasoning={ticket.llmReasoning} priority={ticket.priority} variant="detailed" showTriage={true} />
                                     </div>
-                                    <PriorityScoreBadge score={ticket.priorityScore} confidence={ticket.confidence} llmReasoning={ticket.llmReasoning} variant="detailed" />
-                                </div>
+                                )}
 
                                 <div className="flex justify-between items-center">
                                     <span className="text-sm font-bold text-gray-600">Client</span>
@@ -401,7 +404,7 @@ export default function TicketDetailsPage({ params }: PageProps) {
                             </div>
                         </div>
                     </div>
-                    <ScoreBreakdown ticket={ticket} />
+                    {canSeeNotes && <ScoreBreakdown ticket={ticket} />}
 
                     {/* ── Customer Conversation ── */}
                     <div className="rounded-lg border border-blue-200 bg-white overflow-hidden" style={{ borderLeftWidth: '4px', borderLeftColor: '#3b82f6' }}>
@@ -410,8 +413,8 @@ export default function TicketDetailsPage({ params }: PageProps) {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
                             </svg>
                             <div>
-                                <h3 className="text-sm font-semibold text-blue-900">Customer Conversation</h3>
-                                <p className="text-[11px] text-blue-500">Visible to everyone including the customer</p>
+                                <h3 className="text-sm font-semibold text-blue-900">External Conversation</h3>
+                                <p className="text-[11px] text-blue-500">Visible to client and support team</p>
                             </div>
                         </div>
                         <div className="p-5">
@@ -472,9 +475,9 @@ export default function TicketDetailsPage({ params }: PageProps) {
                             </svg>
                             <div>
                                 <h3 className="text-sm font-semibold text-amber-900 flex items-center gap-1.5">
-                                    Internal Notes
+                                    Internal Notes — Staff only
                                 </h3>
-                                <p className="text-[11px] font-bold text-amber-700">NOT visible to the customer</p>
+                                <p className="text-[11px] font-bold text-amber-700">Not visible to the client</p>
                             </div>
                         </div>
                         <div className="p-5">
@@ -519,6 +522,7 @@ export default function TicketDetailsPage({ params }: PageProps) {
                     </div>
                     )}
 
+                    {canUpdateStatus && (
                     <div className="bg-white rounded-lg border border-gray-200">
                         <div className="p-6">
                             <h3 className="text-lg font-bold text-gray-900 mb-4">
@@ -538,6 +542,7 @@ export default function TicketDetailsPage({ params }: PageProps) {
                                             <option value="in_progress">In Progress</option>
                                             <option value="awaiting_client">Awaiting Client</option>
                                             <option value="resolved">Resolved</option>
+                                            <option value="closed">Closed</option>
                                         </>
                                     ) : (
                                         <>
@@ -556,6 +561,7 @@ export default function TicketDetailsPage({ params }: PageProps) {
                             </div>
                         </div>
                     </div>
+                    )}
                 </div>
             </div>
         </div>

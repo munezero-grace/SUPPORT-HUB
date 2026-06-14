@@ -17,12 +17,13 @@ enum UserRoleEnum {
 model Users {
   id                  String               @id @default(uuid())
   firstName           String
-  lastName            String
+  lastName            String?
   email               String               @unique
   password            String?
   provider            String?
   providerId          String?
   hasChangedPassword  Boolean              @default(false)
+  specialty           String?
   userRoles           UserRoles[]
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
@@ -33,6 +34,21 @@ model Users {
   IntegrationSettings IntegrationSettings?
   TicketNotes         TicketNote[]
   TicketComments      TicketComment[]
+  Notifications       Notification[]
+}
+
+model Notification {
+  id         String   @id @default(uuid())
+  userId     String
+  type       String   @default("new_ticket")
+  title      String
+  body       String
+  ticketCode String?
+  read       Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  user       Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("Notifications")
 }
 
 model Roles {
@@ -117,6 +133,7 @@ enum StatusEnum {
   assigned
   awaiting_client
   resolved
+  closed
 }
 
 enum PriorityEnum {
@@ -130,7 +147,7 @@ model Tickets {
   id            String        @id @default(uuid())
   ticketCode    String        @unique
   title         String
-  status        StatusEnum    @default(in_progress)
+  status        StatusEnum    @default(new)
   priority      PriorityEnum  @default(medium)
   description   String?
   createdBy     String?

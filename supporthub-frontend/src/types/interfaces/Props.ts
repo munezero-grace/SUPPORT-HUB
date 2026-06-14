@@ -49,6 +49,7 @@ export interface PaginationProps {
 export interface CardProps {
   children: ReactNode
   className?: string
+  onClick?: () => void
 }
 
 export interface BadgeProps {

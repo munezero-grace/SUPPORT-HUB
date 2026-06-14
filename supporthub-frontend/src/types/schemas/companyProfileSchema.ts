@@ -7,5 +7,6 @@ export const companyProfileSchema = z.object({
     .string()
     .url('Invalid company website URL')
     .nullable()
-    .or(z.string().min(1, 'Company website is required').nullable()),
+    .optional()
+    .or(z.literal('')),
 })

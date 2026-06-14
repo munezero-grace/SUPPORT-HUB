@@ -50,6 +50,7 @@ declare module 'next-auth/jwt' {
     firstName?: string
     lastName?: string
     hasChangedPassword?: boolean
+    client?: Client
   }
 }
 

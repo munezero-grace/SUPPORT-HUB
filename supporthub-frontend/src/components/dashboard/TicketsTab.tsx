@@ -1,5 +1,6 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import {
   TicketsTabProps,
   TicketCardProps,
@@ -8,8 +9,13 @@ import {
 import { Card } from '@/components/ui/Card'
 
 function TicketCard({ ticket }: TicketCardProps) {
+  const router = useRouter()
+
   return (
-    <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer border border-gray-200 rounded-xl">
+    <Card
+      className="p-4 hover:shadow-md transition-shadow cursor-pointer border border-gray-200 rounded-xl"
+      onClick={() => router.push(`/dashboard/tickets/${ticket.ticketCode}`)}
+    >
       <div className="space-y-3">
         <div className="flex justify-between items-start">
           <div className="flex items-center gap-2">
@@ -47,8 +53,10 @@ function TicketCard({ ticket }: TicketCardProps) {
   )
 }
 
-function KanbanColumn({ title, count, tickets }: KanbanColumnProps) {
+function KanbanColumn({ title, count, tickets, viewAllHref }: KanbanColumnProps) {
+  const router = useRouter()
   const safeTickets = Array.isArray(tickets) ? tickets : []
+
   return (
     <Card className="bg-white border border-gray-100 rounded-xl p-4 flex flex-col min-h-[420px] shadow-sm">
       <div className="flex items-center gap-3 mb-6">
@@ -64,7 +72,10 @@ function KanbanColumn({ title, count, tickets }: KanbanColumnProps) {
           <TicketCard key={ticket.id} ticket={ticket} />
         ))}
       </div>
-      <button className="w-full py-3 text-sm text-gray-700 hover:text-gray-900 font-medium transition-colors mt-4 border-t border-gray-100">
+      <button
+        className="w-full py-3 text-sm text-gray-700 hover:text-gray-900 font-medium transition-colors mt-4 border-t border-gray-100"
+        onClick={() => router.push(viewAllHref)}
+      >
         View all
       </button>
     </Card>
@@ -74,8 +85,8 @@ function KanbanColumn({ title, count, tickets }: KanbanColumnProps) {
 export default function TicketsTab({ data, loading }: TicketsTabProps) {
   if (loading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-        {[...Array(4)].map((_, i) => (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
+        {[...Array(5)].map((_, i) => (
           <div
             key={i}
             className="animate-pulse h-[420px] rounded-xl border border-gray-100 shadow-sm"
@@ -99,30 +110,41 @@ export default function TicketsTab({ data, loading }: TicketsTabProps) {
       tickets: data.new,
       count: data.new.length,
       color: 'bg-black',
+      viewAllHref: '/dashboard/tickets?status=new',
+    },
+    {
+      title: 'Assigned',
+      tickets: data.assigned,
+      count: data.assigned.length,
+      color: 'bg-black',
+      viewAllHref: '/dashboard/tickets?status=assigned',
     },
     {
       title: 'In Progress',
       tickets: data.in_progress,
       count: data.in_progress.length,
       color: 'bg-black',
+      viewAllHref: '/dashboard/tickets?status=in_progress',
     },
     {
       title: 'Awaiting Client',
       tickets: data.awaiting_client,
       count: data.awaiting_client.length,
       color: 'bg-black',
+      viewAllHref: '/dashboard/tickets?status=awaiting_client',
     },
     {
       title: 'Recently Resolved',
       tickets: data.resolved,
       count: data.resolved.length,
       color: 'bg-black',
+      viewAllHref: '/dashboard/tickets?status=resolved',
     },
   ]
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
         {columns.map((column) => (
           <KanbanColumn
             key={column.title}
@@ -130,6 +152,7 @@ export default function TicketsTab({ data, loading }: TicketsTabProps) {
             count={column.count}
             tickets={column.tickets}
             color={column.color}
+            viewAllHref={column.viewAllHref}
           />
         ))}
       </div>

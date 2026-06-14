@@ -79,11 +79,13 @@ const ClientListItem: FC<ClientListItemProps> = ({
         </div>
       </td>
       <td className="p-4">
-        <Badge
-          variant={client.supportTier === 'premium' ? 'warning' : 'default'}
-        >
-          {client.supportTier}
-        </Badge>
+        <span title="Used for future SLA and enterprise feature segmentation. Not a billing indicator.">
+          <Badge
+            variant={client.supportTier === 'premium' ? 'warning' : 'default'}
+          >
+            {client.supportTier === 'premium' ? 'Enterprise' : 'Standard'}
+          </Badge>
+        </span>
       </td>
       <td className="p-4">{client.activeTickets ?? 0}</td>
       <td className="p-4">
@@ -120,8 +122,7 @@ const ClientListItem: FC<ClientListItemProps> = ({
             },
             {
               label: 'View Tickets',
-              onClick: () =>
-                router.push(`/clients/${client.id}/tickets`),
+              onClick: () => router.push(`/dashboard/tickets?client=${client.clientCode}`),
             },
             {
               label:

@@ -3,8 +3,8 @@ import { RESPONSE_STATUS } from '@/constants/errorMessages'
 
 export type GoogleIconProps = IconProps
 export type Size = 'sm' | 'md' | 'lg'
-export type Status = 'open' | 'in-progress' | 'resolved' | 'closed'
-export type StatusType = 'open' | 'in-progress' | 'resolved' | 'closed'
+export type Status = 'new' | 'assigned' | 'in_progress' | 'awaiting_client' | 'resolved' | 'closed'
+export type StatusType = 'new' | 'assigned' | 'in_progress' | 'awaiting_client' | 'resolved' | 'closed'
 
 export * from './clients'
 

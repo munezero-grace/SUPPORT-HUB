@@ -13,7 +13,7 @@ export async function getClientById(
     },
     include: {
       user: true,
-      clientProducts: true,
+      clientProducts: { include: { product: true } },
     },
   });
 }

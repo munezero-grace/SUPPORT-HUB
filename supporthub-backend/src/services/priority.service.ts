@@ -2,10 +2,10 @@ import Groq from "groq-sdk";
 import fetch from "node-fetch";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
-const MODEL = process.env.GROQ_MODEL || "llama-3.1-8b-instant";
+const MODEL = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
 const ML_SERVICE_URL = process.env.ML_SERVICE_URL || "http://localhost:8000";
 
-const AGE_SATURATION_DAYS = 14;
+const AGE_SATURATION_HOURS = 72;
 
 type ScorableTicket = {
   title?: string | null;
@@ -30,8 +30,8 @@ const clamp01 = (n: number): number =>
 const computeAgeScore = (createdAt: Date | string): number => {
   const createdMs = new Date(createdAt).getTime();
   if (!Number.isFinite(createdMs)) return 0;
-  const ageDays = (Date.now() - createdMs) / (1000 * 60 * 60 * 24);
-  return Math.min(1, Math.max(0, ageDays / AGE_SATURATION_DAYS));
+  const ageHours = (Date.now() - createdMs) / (1000 * 60 * 60);
+  return Math.min(1, Math.max(0, ageHours / AGE_SATURATION_HOURS));
 };
 
 const scoreWithMLService = async (ticket: ScorableTicket): Promise<ScoreResult> => {
@@ -119,10 +119,11 @@ const scoreWithGroq = async (ticket: ScorableTicket): Promise<ScoreResult> => {
   }
 
   const age = computeAgeScore(ticket.createdAt);
-  const priorityScore = 0.4 * emotion + 0.35 * complexity + 0.25 * age;
+  const aiPriority = clamp01(0.6 * emotion + 0.4 * complexity);
+  const priorityScore = clamp01(0.75 * aiPriority + 0.25 * age);
   const priority =
-    priorityScore >= 0.75 ? "critical" :
-    priorityScore >= 0.50 ? "high" :
+    priorityScore >= 0.80 ? "critical" :
+    priorityScore >= 0.55 ? "high" :
     priorityScore >= 0.25 ? "medium" : "low";
 
   return {
@@ -131,7 +132,7 @@ const scoreWithGroq = async (ticket: ScorableTicket): Promise<ScoreResult> => {
     age,
     priorityScore,
     agingScore: age,
-    llmReasoning: `Emotion: ${Math.round(emotion * 100)}%; Complexity: ${Math.round(complexity * 100)}%; Aging: ${Math.round(age * 100)}% (Groq fallback).`,
+    llmReasoning: `Sentiment: ${Math.round(emotion * 100)}%; Complexity: ${Math.round(complexity * 100)}%; Aging: ${Math.round(age * 100)}% → ai_priority: ${Math.round(aiPriority * 100)}% (Groq fallback).`,
     confidence: 0.5,
     priority,
   };

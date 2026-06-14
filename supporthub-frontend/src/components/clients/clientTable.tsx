@@ -27,7 +27,7 @@ export function ClientTable({ clients, searchQuery }: ClientTableProps) {
               Products
             </th>
             <th className="p-4 text-left text-sm font-medium text-gray-500">
-              Support Tier
+              Client Type
             </th>
             <th className="p-4 text-left text-sm font-medium text-gray-500">
               Active Tickets

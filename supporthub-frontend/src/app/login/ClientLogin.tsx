@@ -1,10 +1,9 @@
 'use client'
 
-import { signIn, useSession } from 'next-auth/react'
+import { signIn } from 'next-auth/react'
 import { useState, FormEvent } from 'react'
 import Head from 'next/head'
 import Image from 'next/image'
-import ChangePasswordModal from '@/components/auth/ChangePasswordModal'
 
 const BPTicketLogin: React.FC = () => {
   const [email, setEmail] = useState<string>('')
@@ -12,8 +11,6 @@ const BPTicketLogin: React.FC = () => {
   const [rememberMe, setRememberMe] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [showPasswordModal, setShowPasswordModal] = useState(false)
-  const { data: session } = useSession()
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -32,17 +29,7 @@ const BPTicketLogin: React.FC = () => {
         const errorData = JSON.parse(result.error)
         setError(errorData.message || 'Login failed')
       } else if (result?.ok) {
-        // Check if user needs to change password
-        const hasChangedPassword = (session?.user as Record<string, unknown>)
-          ?.hasChangedPassword
-        if (!hasChangedPassword) {
-          setShowPasswordModal(true)
-          setTimeout(() => {
-            window.location.href = '/dashboard'
-          }, 2000)
-        } else {
-          window.location.href = '/dashboard'
-        }
+        window.location.href = '/dashboard'
       }
     } catch (err) {
       setError('An error occurred during login')
@@ -159,11 +146,6 @@ const BPTicketLogin: React.FC = () => {
           </div>
         </div>
       </div>
-
-      <ChangePasswordModal
-        isOpen={showPasswordModal}
-        onClose={() => setShowPasswordModal(false)}
-      />
     </>
   )
 }

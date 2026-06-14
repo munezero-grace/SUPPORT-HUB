@@ -9,9 +9,10 @@ type TicketHandlers = {
   onAssign?: (ticket: Ticket) => void;
   isAdmin?: boolean;
   currentUserId?: string;
+  showPriorityScore?: boolean;
 };
 
-export const createTicketTableColumns = ({ onEdit, onDelete, onAssign }: TicketHandlers) => [
+export const createTicketTableColumns = ({ onEdit, onDelete, onAssign, showPriorityScore }: TicketHandlers) => [
   {
     header: 'ID ↑↓',
     accessor: (ticket: Ticket): ReactNode => (
@@ -22,9 +23,9 @@ export const createTicketTableColumns = ({ onEdit, onDelete, onAssign }: TicketH
   {
     header: 'Title',
     accessor: (ticket: Ticket): ReactNode => (
-      <span className="truncate block" title={ticket.title}>{ticket.title}</span>
+      <span className="truncate block max-w-[280px]" title={ticket.title}>{ticket.title}</span>
     ),
-    className: 'w-[180px] min-w-[180px]',
+    className: 'min-w-[140px] max-w-[280px]',
   },
   {
     header: 'Client',
@@ -62,13 +63,13 @@ export const createTicketTableColumns = ({ onEdit, onDelete, onAssign }: TicketH
     },
     className: 'w-32',
   },
-  {
+  ...(showPriorityScore ? [{
     header: 'Priority Score',
     accessor: (ticket: Ticket): ReactNode => (
-      <PriorityScoreBadge score={ticket.priorityScore} confidence={ticket.confidence} llmReasoning={ticket.llmReasoning} variant="detailed" />
+      <PriorityScoreBadge score={ticket.priorityScore} confidence={ticket.confidence} llmReasoning={ticket.llmReasoning} priority={ticket.priority} variant="detailed" />
     ),
     className: 'w-40',
-  },
+  }] : []),
   {
     header: 'Due Date',
     accessor: (ticket: Ticket): ReactNode => (

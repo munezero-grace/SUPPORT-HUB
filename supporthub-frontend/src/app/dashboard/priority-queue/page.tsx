@@ -25,6 +25,15 @@ const STATUS_LABELS: Record<string, string> = {
 
 type RankedTicket = Ticket & { _rank: number }
 
+const PRIORITY_TIER: Record<string, number> = { critical: 3, high: 2, medium: 1, low: 0 }
+
+const byPriorityThenScore = (a: Ticket, b: Ticket): number => {
+  const aTier = PRIORITY_TIER[a.priority?.toLowerCase() ?? ''] ?? -1
+  const bTier = PRIORITY_TIER[b.priority?.toLowerCase() ?? ''] ?? -1
+  if (aTier !== bTier) return bTier - aTier
+  return (b.priorityScore ?? 0) - (a.priorityScore ?? 0)
+}
+
 function buildColumns() {
   return [
     {
@@ -45,7 +54,7 @@ function buildColumns() {
     {
       header: 'Ticket',
       accessor: (ticket: RankedTicket) => (
-        <div className="min-w-0">
+        <div className="min-w-0 max-w-[280px]">
           <Link
             href={`/dashboard/tickets/${ticket.ticketCode || ticket.id}`}
             className="text-sm font-medium text-gray-900 hover:text-blue-600 truncate block"
@@ -59,7 +68,7 @@ function buildColumns() {
           )}
         </div>
       ),
-      className: 'min-w-[200px]',
+      className: 'min-w-[160px] max-w-[280px]',
     },
     {
       header: 'Client',
@@ -81,7 +90,7 @@ function buildColumns() {
     {
       header: 'Priority Score',
       accessor: (ticket: RankedTicket) => (
-        <PriorityScoreBadge score={ticket.priorityScore} confidence={ticket.confidence} llmReasoning={ticket.llmReasoning} variant="detailed" />
+        <PriorityScoreBadge score={ticket.priorityScore} confidence={ticket.confidence} llmReasoning={ticket.llmReasoning} priority={ticket.priority} variant="detailed" />
       ),
       className: 'w-48',
     },
@@ -127,7 +136,9 @@ export default function PriorityQueuePage() {
     setError(null)
     try {
       const data = await ticketService.getRankedTickets()
-      const ranked: RankedTicket[] = data.map((t, i) => ({ ...t, _rank: i + 1 }))
+      const ranked: RankedTicket[] = [...data]
+        .sort(byPriorityThenScore)
+        .map((t, i) => ({ ...t, _rank: i + 1 }))
       setTickets(ranked)
       setLastRefreshed(new Date())
     } catch {
@@ -141,11 +152,8 @@ export default function PriorityQueuePage() {
     fetchRanked()
   }, [fetchRanked])
 
-  const criticalCount = tickets.filter((t) => (t.priorityScore ?? 0) >= 0.75).length
-  const highCount = tickets.filter((t) => {
-    const s = t.priorityScore ?? 0
-    return s >= 0.5 && s < 0.75
-  }).length
+  const criticalCount = tickets.filter((t) => t.priority?.toLowerCase() === 'critical').length
+  const highCount     = tickets.filter((t) => t.priority?.toLowerCase() === 'high').length
   const topScore = tickets[0]?.priorityScore ?? 0
 
   const columns = buildColumns()
@@ -256,23 +264,24 @@ export default function PriorityQueuePage() {
           {/* Score legend */}
           {tickets.length > 0 && (
             <div className="bg-white rounded-lg shadow-sm border border-gray-100 px-4 py-3 flex flex-wrap gap-4 text-xs text-gray-500">
-              <span className="font-medium text-gray-600 mr-1">Score tiers:</span>
+              <span className="font-medium text-gray-600 mr-1">Priority tiers (ML classifier):</span>
               <span className="flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block" />
-                Critical ≥ 75%
+                Critical
               </span>
               <span className="flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-orange-500 inline-block" />
-                High 50–74%
+                High
               </span>
               <span className="flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-yellow-500 inline-block" />
-                Medium 25–49%
+                Medium
               </span>
               <span className="flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-green-500 inline-block" />
-                Low &lt; 25%
+                Low
               </span>
+              <span className="text-gray-400">· % = adaptive priority score · Triage shown when AI confidence &lt; 40%</span>
             </div>
           )}
 

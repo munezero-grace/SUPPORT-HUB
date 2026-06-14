@@ -29,6 +29,14 @@ export default withAuth(
       }
     }
 
+    if (isAuthenticated && req.nextUrl.pathname.startsWith('/dashboard/team')) {
+      const role = token?.role as string | undefined
+      const isStaff = role === 'super_admin' || role === 'ticket_manager' || role === 'developer'
+      if (!isStaff) {
+        return NextResponse.redirect(new URL('/dashboard', req.url))
+      }
+    }
+
     return NextResponse.next()
   },
   {

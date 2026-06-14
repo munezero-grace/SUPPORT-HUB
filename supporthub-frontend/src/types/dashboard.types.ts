@@ -40,6 +40,7 @@ export interface ProductStats {
 
 export interface TicketsByStatus {
   new: TicketItem[]
+  assigned: TicketItem[]
   in_progress: TicketItem[]
   awaiting_client: TicketItem[]
   resolved: TicketItem[]
@@ -83,6 +84,7 @@ export interface KanbanColumnProps {
   count: number
   tickets: TicketItem[]
   color: string
+  viewAllHref: string
 }
 
 export interface StatCardProps {

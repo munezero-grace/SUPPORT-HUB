@@ -25,9 +25,9 @@ const STATUS_OPTIONS = [
   { label: 'Inactive', value: 'inactive' },
 ];
 
-const SUPPORT_TIER_OPTIONS = [
+const CLIENT_TYPE_OPTIONS = [
   { label: 'Standard', value: 'standard' },
-  { label: 'Premium', value: 'premium' },
+  { label: 'Enterprise', value: 'premium' },
 ];
 
 export const filterFields = [
@@ -38,9 +38,9 @@ export const filterFields = [
     options: STATUS_OPTIONS,
   },
   {
-    label: 'Support Tier',
+    label: 'Client Type',
     name: 'supportTier',
     type: 'select',
-    options: SUPPORT_TIER_OPTIONS,
+    options: CLIENT_TYPE_OPTIONS,
   },
 ]

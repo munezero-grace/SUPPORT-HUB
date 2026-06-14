@@ -47,6 +47,7 @@ export interface CreateClientDto {
   supportTier?: SupportTier
   status?: Status
   userId?: string
+  productIds?: string[]
 }
 
 export interface UpdateClientDto extends Partial<CreateClientDto> {

@@ -6,7 +6,7 @@ import { encode, decode } from 'next-auth/jwt'
 import { socialSignup } from '@/services/auth.service'
 
 import { splitName } from '@/lib/utils'
-import { CustomUser } from '@/types/auth'
+import { CustomUser, Client } from '@/types/auth'
 
 const REMEMBER_ME_MAX_AGE = 30 * 24 * 60 * 60  // 30 days
 const DEFAULT_MAX_AGE = 8 * 60 * 60              // 8 hours
@@ -183,7 +183,7 @@ const authOptions: NextAuthOptions = {
         session.user.providerId = token.providerId as string
         session.user.email = token.email as string
         session.user.name = (token.name as string) || ''
-        session.user.client = token.client as undefined
+        session.user.client = token.client as Client | undefined
         session.user.hasChangedPassword = token.hasChangedPassword as boolean
       }
       return session

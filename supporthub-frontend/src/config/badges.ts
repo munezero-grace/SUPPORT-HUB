@@ -24,13 +24,21 @@ export const badgeConfig: BadgeConfig = {
 
 export const statusConfig: StatusConfig = {
   types: {
-    'open': {
-      text: 'Open',
+    'new': {
+      text: 'New',
       className: 'bg-[#FEF3C7] text-[#D97706]'
     },
-    'in-progress': {
+    'assigned': {
+      text: 'Assigned',
+      className: 'bg-[#EDE9FE] text-[#7C3AED]'
+    },
+    'in_progress': {
       text: 'In Progress',
       className: 'bg-[#EFF6FF] text-[#3B82F6]'
+    },
+    'awaiting_client': {
+      text: 'Awaiting Client',
+      className: 'bg-[#FFF7ED] text-[#EA580C]'
     },
     'resolved': {
       text: 'Resolved',

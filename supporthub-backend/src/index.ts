@@ -11,6 +11,7 @@ import ticketsRoutes from "./routes/ticketsRoutes";
 import userRoutes from "./routes/userRoutes";
 import settingsRoutes from "./routes/settingsRoutes";
 import dashboardRoutes from "./routes/dashboardRoutes";
+import notificationRoutes from "./routes/notificationRoutes";
 import dotenv from "dotenv";
 import path from "path";
 import { startPriorityRefreshJob } from "./jobs/priorityRefresh";
@@ -63,6 +64,7 @@ app.use("/api/tickets", ticketsRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/settings", settingsRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 app.get("/api", (_req: Request, res: Response) => {
   res.status(HTTP_OK).json({

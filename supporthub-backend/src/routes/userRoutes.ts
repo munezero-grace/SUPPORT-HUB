@@ -22,6 +22,7 @@ router.post(
 router.get(
   "/team",
   WrapAsync(authenticateUser),
+  WrapAsync(requireRole("super_admin", "ticket_manager")),
   WrapAsync(UsersController.getTeamMembers)
 );
 
@@ -52,6 +53,13 @@ router.post(
   WrapAsync(authenticateUser),
   WrapAsync(requireRole("super_admin")),
   WrapAsync(UsersController.reactivateUser)
+);
+
+router.post(
+  "/:id/resend-invite",
+  WrapAsync(authenticateUser),
+  WrapAsync(requireRole("super_admin")),
+  WrapAsync(UsersController.resendInvite)
 );
 
 export default router;

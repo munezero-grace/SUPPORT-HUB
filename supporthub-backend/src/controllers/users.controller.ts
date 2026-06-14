@@ -95,11 +95,11 @@ class UsersController {
 
   static async createUser(req: Request, res: Response): Promise<Response> {
     try {
-      const { firstName, lastName, email, password, role, clientId } = req.body;
+      const { firstName, lastName, email, role, specialty, clientId } = req.body;
 
-      if (!firstName || !lastName || !email || !password || !role) {
+      if (!firstName || !lastName || !email || !role) {
         return res.status(HTTP_BAD_REQUEST).json({
-          error: "firstName, lastName, email, password, and role are required",
+          error: "firstName, lastName, email, and role are required",
         });
       }
 
@@ -114,7 +114,7 @@ class UsersController {
         });
       }
 
-      const user = await userService.createUser({ firstName, lastName, email, password, role, clientId });
+      const user = await userService.createUser({ firstName, lastName, email, role, specialty, clientId });
       return res.status(201).json({
         message: SUCCESS_MESSAGES.USER_REGISTERED,
         data: user,
@@ -122,6 +122,22 @@ class UsersController {
     } catch (error: any) {
       return res.status(HTTP_BAD_REQUEST).json({
         error: error.message || "Failed to create user",
+      });
+    }
+  }
+
+  static async resendInvite(req: Request, res: Response): Promise<Response> {
+    try {
+      const userId = req.params.id;
+      await userService.resendInvite(userId);
+      return res.status(HTTP_OK).json({
+        status: "success",
+        message: SUCCESS_MESSAGES.INVITE_SENT,
+      });
+    } catch (error: any) {
+      return res.status(HTTP_BAD_REQUEST).json({
+        status: "error",
+        message: error.message || ERROR_MESSAGES.FAILED_TO_SEND_INVITE,
       });
     }
   }

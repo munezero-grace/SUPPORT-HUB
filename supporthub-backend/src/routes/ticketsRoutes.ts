@@ -83,6 +83,7 @@ router.get(
 router.put(
   "/:id",
   WrapAsync(authenticateUser),
+  WrapAsync(requireRole("super_admin", "ticket_manager", "developer")),
   upload.array("files", 10),
   validateRequest(updateTicketSchema),
   WrapAsync(TicketsController.updateTicket),
@@ -90,6 +91,7 @@ router.put(
 router.post(
   "/:id/assign",
   WrapAsync(authenticateUser),
+  WrapAsync(requireRole("super_admin", "ticket_manager")),
   WrapAsync(TicketsController.assignTicket),
 );
 router.post(
@@ -100,12 +102,14 @@ router.post(
 router.post(
   "/:id/notes",
   WrapAsync(authenticateUser),
+  WrapAsync(requireRole("super_admin", "ticket_manager", "developer")),
   WrapAsync(TicketsController.addNote),
 );
 
 router.delete(
   "/:id",
   WrapAsync(authenticateUser),
+  WrapAsync(requireRole("super_admin")),
   WrapAsync(TicketsController.deleteTicket),
 );
 

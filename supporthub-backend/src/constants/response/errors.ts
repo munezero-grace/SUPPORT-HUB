@@ -2,7 +2,6 @@ export const ERROR_MESSAGES = {
   INVALID_CREDENTIALS: "Invalid credentials.",
   USER_ALREADY_EXISTS: "User already exists.",
   ACCOUNT_DEACTIVATED: "Your account has been deactivated. Please contact support.",
-  PASSWORD_CHANGE_REQUIRED: "You must change your password before continuing.",
   ROLE_NOT_FOUND: "Role not found",
   ASSIGN_ROLE_ERROR: "Error assigning role.",
   SIGNUP_FAILED: "Signup failed.",
@@ -75,6 +74,9 @@ export const ERROR_MESSAGES = {
   TICKET_TITLE_REQUIRED: "Ticket title is required.",
   TICKET_DESCRIPTION_REQUIRED: "Ticket description is required.",
   TICKET_CLIENT_REQUIRED: "A client must be selected for this ticket.",
+  SET_PASSWORD_TOKEN_INVALID: "This link has expired or is invalid. Please contact your administrator for a new invite.",
+  SET_PASSWORD_LINK_USED: "This link has already been used. Please log in or contact your administrator.",
+  FAILED_TO_SEND_INVITE: "Failed to send invite email.",
 };
 
 export const RESPONSE_STATUS = {

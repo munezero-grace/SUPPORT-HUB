@@ -18,12 +18,29 @@ const ROLES = [
   { value: 'client', label: 'Client' },
 ]
 
+const SPECIALTIES = [
+  { value: '', label: 'None' },
+  { value: 'Frontend Developer', label: 'Frontend Developer' },
+  { value: 'Backend Developer', label: 'Backend Developer' },
+  { value: 'Full Stack Developer', label: 'Full Stack Developer' },
+  { value: 'Mobile Developer', label: 'Mobile Developer' },
+  { value: 'UI/UX Designer', label: 'UI/UX Designer' },
+  { value: 'QA Engineer', label: 'QA Engineer' },
+  { value: 'DevOps Engineer', label: 'DevOps Engineer' },
+  { value: 'ML Engineer', label: 'ML Engineer' },
+  { value: 'Database Administrator', label: 'Database Administrator' },
+  { value: 'Product Manager', label: 'Product Manager' },
+  { value: 'Technical Support', label: 'Technical Support' },
+]
+
+const STAFF_ROLES = ['developer', 'ticket_manager', 'super_admin']
+
 const INITIAL = {
   firstName: '',
   lastName: '',
   email: '',
-  password: '',
   role: 'developer',
+  specialty: '',
   clientId: '',
 }
 
@@ -62,7 +79,7 @@ const CreateUserModal = ({ isOpen, onClose }: Props) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!form.firstName.trim() || !form.lastName.trim() || !form.email.trim() || !form.password.trim()) {
+    if (!form.firstName.trim() || !form.lastName.trim() || !form.email.trim()) {
       toast.error('All fields are required')
       return
     }
@@ -74,8 +91,8 @@ const CreateUserModal = ({ isOpen, onClose }: Props) => {
       firstName: form.firstName.trim(),
       lastName: form.lastName.trim(),
       email: form.email.trim(),
-      password: form.password,
       role: form.role,
+      specialty: STAFF_ROLES.includes(form.role) && form.specialty ? form.specialty : undefined,
       clientId: form.role === 'client' ? form.clientId : undefined,
     })
   }
@@ -134,16 +151,9 @@ const CreateUserModal = ({ isOpen, onClose }: Props) => {
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-            <input
-              type="password"
-              value={form.password}
-              onChange={(e) => set('password', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
-              placeholder="Min 8 chars, upper, lower, number, special"
-            />
-          </div>
+          <p className="text-xs text-gray-500 -mt-1">
+            An email will be sent to this address with a link to set up their password.
+          </p>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
@@ -157,6 +167,21 @@ const CreateUserModal = ({ isOpen, onClose }: Props) => {
               ))}
             </select>
           </div>
+
+          {STAFF_ROLES.includes(form.role) && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Specialty</label>
+              <select
+                value={form.specialty}
+                onChange={(e) => set('specialty', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-gray-400"
+              >
+                {SPECIALTIES.map((s) => (
+                  <option key={s.value} value={s.value}>{s.label}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {form.role === 'client' && (
             <div>

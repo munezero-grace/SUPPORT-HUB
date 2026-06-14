@@ -8,3 +8,10 @@
 
 # And this file itself
 !/.gitignore
+venv/**/*
+
+# Thesis and office documents — never commit
+*.docx
+*.pdf
+*.pptx
+*.xlsx

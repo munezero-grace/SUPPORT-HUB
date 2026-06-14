@@ -239,17 +239,18 @@ export default function ClientsPage() {
       ),
     },
     {
-      header: 'Support Tier',
+      header: 'Client Type',
       accessor: (client: Client) => (
-        <Badge
-          variant={client.supportTier === 'premium' ? 'warning' : 'default'}
-          className={
-            client.supportTier === 'premium' ? 'bg-black text-white' : ''
-          }
-        >
-          {client.supportTier.charAt(0).toUpperCase() +
-            client.supportTier.slice(1)}
-        </Badge>
+        <span title="Used for future SLA and enterprise feature segmentation. Not a billing indicator.">
+          <Badge
+            variant={client.supportTier === 'premium' ? 'warning' : 'default'}
+            className={
+              client.supportTier === 'premium' ? 'bg-black text-white' : ''
+            }
+          >
+            {client.supportTier === 'premium' ? 'Enterprise' : 'Standard'}
+          </Badge>
+        </span>
       ),
     },
     {
@@ -290,8 +291,7 @@ export default function ClientsPage() {
             ] : []),
             {
               label: 'View Tickets',
-              onClick: () =>
-                router.push(`/dashboard/clients/${client.id}/tickets`),
+              onClick: () => router.push(`/dashboard/tickets?client=${client.clientCode}`),
             },
             ...(isSuperAdmin ? [
               {

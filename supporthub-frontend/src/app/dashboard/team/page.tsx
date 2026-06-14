@@ -12,6 +12,8 @@ interface TeamMember {
   lastName: string
   email: string
   roles: string[]
+  specialty?: string | null
+  hasChangedPassword?: boolean
   assignedTicketCount: number
 }
 
@@ -253,6 +255,8 @@ export default function TeamPage() {
               const initials      = getInitials(member.firstName, member.lastName)
               const avatarColor   = getAvatarColor(member.id)
 
+              const isPending = member.hasChangedPassword === false
+
               return (
                 <div
                   key={member.id}
@@ -263,19 +267,31 @@ export default function TeamPage() {
                     <div className={`w-11 h-11 rounded-full ${avatarColor} text-white flex items-center justify-center text-sm font-bold flex-shrink-0`}>
                       {initials}
                     </div>
-                    <div>
-                      <h3 className="text-sm font-semibold text-gray-900 leading-tight">
-                        {member.firstName} {member.lastName}
-                      </h3>
-                      <p className="text-xs text-gray-400 mt-0.5">{member.email}</p>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="text-sm font-semibold text-gray-900 leading-tight">
+                          {member.firstName} {member.lastName}
+                        </h3>
+                        {isPending && (
+                          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 border border-amber-200">
+                            Invite Pending
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-400 mt-0.5 truncate">{member.email}</p>
                     </div>
                   </div>
 
-                  {/* Role badge */}
-                  <div className="mb-4">
+                  {/* Role + specialty badges */}
+                  <div className="flex flex-wrap gap-1.5 mb-4">
                     <span className="inline-block text-xs px-2.5 py-1 rounded-md bg-gray-100 text-gray-700 font-medium">
                       {getRoleLabel(member.roles)}
                     </span>
+                    {member.specialty && (
+                      <span className="inline-block text-xs px-2.5 py-1 rounded-md bg-blue-50 text-blue-700 font-medium">
+                        {member.specialty}
+                      </span>
+                    )}
                   </div>
 
                   {/* Footer: assigned count + action */}

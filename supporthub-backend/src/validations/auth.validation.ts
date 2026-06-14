@@ -68,6 +68,20 @@ export const googleSchema = Joi.object({
     .messages({ "string.empty": "providerId is required" }),
 });
 
+export const setPasswordSchema = Joi.object({
+  token: Joi.string().required().messages({
+    "string.empty": "token is required",
+  }),
+
+  newPassword: Joi.string().min(8).pattern(passwordRegex).required().messages({
+    "string.min": "newPassword must be at least 8 characters long",
+    "string.pattern.base":
+      "newPassword must contain at least one uppercase letter, one lowercase letter, one number, and one special character (!@#$%^&*)",
+    "string.empty": "newPassword is required",
+  }),
+});
+
 export const signupValidation = signupSchema;
 export const loginValidation = loginSchema;
 export const googleValidation = googleSchema;
+export const setPasswordValidation = setPasswordSchema;

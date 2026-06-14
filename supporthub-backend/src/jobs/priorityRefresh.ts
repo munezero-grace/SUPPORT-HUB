@@ -31,15 +31,15 @@ async function scoreOneTicket(t: {
     description: t.description,
     createdAt: t.createdAt,
   });
-  const LOW_CONFIDENCE_THRESHOLD = 0.5;
-  const llmReasoning =
-    score.confidence < LOW_CONFIDENCE_THRESHOLD
-      ? `⚠️ Low confidence — recommend manual review. ${score.llmReasoning}`
-      : score.llmReasoning;
+
+  // Store the clean reasoning text — the frontend displays confidence warnings
+  // based on the numeric confidence field, no alarming prefix needed here.
+  const llmReasoning = score.llmReasoning;
 
   await prisma.tickets.update({
     where: { id: t.id },
     data: {
+      priority:        score.priority as "critical" | "high" | "medium" | "low",
       priorityScore:   score.priorityScore,
       emotionScore:    score.emotion,
       complexityScore: score.complexity,
@@ -57,7 +57,7 @@ async function refreshPriorities() {
 
   try {
     const tickets = await prisma.tickets.findMany({
-      where: { status: { not: "resolved" } },
+      where: { status: { notIn: ["resolved", "closed"] } },
       select: { id: true, title: true, description: true, createdAt: true },
     });
 

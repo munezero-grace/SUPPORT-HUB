@@ -21,7 +21,9 @@ export type User = {
   lastName: string;
   email: string;
   roles: string[];
+  specialty?: string | null;
   deletedAt?: string | null;
+  hasChangedPassword?: boolean;
 };
 
 export interface ApiError {

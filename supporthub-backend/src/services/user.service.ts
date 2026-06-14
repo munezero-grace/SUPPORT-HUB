@@ -1,11 +1,11 @@
 import { PrismaClient, UserRoleEnum } from "@prisma/client";
-import * as bcrypt from "bcryptjs";
 import { HTTP_BAD_REQUEST } from "../constants/httpStatusCodes";
 import { ERROR_MESSAGES } from "../constants/response/errors";
 import { SUCCESS_MESSAGES } from "../constants/response/successMessages";
 import { SignupRequestBody } from "../types/auth";
 import { UserCompanyProfile } from "../types/client";
-import { sendWelcomeEmail } from "../helpers/emailHelper";
+import { sendSetPasswordEmail } from "../helpers/emailHelper";
+import { generateSetPasswordToken } from "../helpers/setPasswordToken";
 
 const prisma = new PrismaClient();
 
@@ -102,22 +102,20 @@ export class UserService {
     firstName: string;
     lastName: string;
     email: string;
-    password: string;
     role: string;
+    specialty?: string;
     clientId?: string;
   }) {
-    const { firstName, lastName, email, password, role, clientId } = data;
+    const { firstName, lastName, email, role, specialty, clientId } = data;
 
     const existing = await prisma.users.findUnique({ where: { email } });
     if (existing) {
       throw new Error(ERROR_MESSAGES.USER_EMAIL_EXISTS);
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    return prisma.$transaction(async (tx) => {
-      const user = await tx.users.create({
-        data: { firstName, lastName, email, password: hashedPassword },
+    const user = await prisma.$transaction(async (tx) => {
+      const newUser = await tx.users.create({
+        data: { firstName, lastName, email, hasChangedPassword: false, specialty: specialty || null },
         select: { id: true, firstName: true, lastName: true, email: true },
       });
 
@@ -128,27 +126,52 @@ export class UserService {
         roleRecord = await tx.roles.create({ data: { name: role as UserRoleEnum } });
       }
 
-      await tx.userRoles.create({ data: { userId: user.id, roleId: roleRecord.id } });
+      await tx.userRoles.create({ data: { userId: newUser.id, roleId: roleRecord.id } });
 
       if (role === "client" && clientId) {
         await tx.clients.update({
           where: { id: clientId },
-          data: { userId: user.id },
+          data: { userId: newUser.id },
         });
       }
 
-      return user;
-    }).then((user) => {
-      sendWelcomeEmail({
-        email: user.email,
-        firstName: user.firstName,
-        temporaryPassword: password,
-      }).catch((error) => {
-        console.error("Failed to send welcome email:", error);
-      });
-
-      return user;
+      return newUser;
     });
+
+    const token = generateSetPasswordToken(user.id);
+    sendSetPasswordEmail({
+      email: user.email,
+      firstName: user.firstName,
+      token,
+    }).catch((error) => {
+      console.error("Failed to send set-password email:", error);
+    });
+
+    return user;
+  }
+
+  async resendInvite(userId: string) {
+    const user = await prisma.users.findUnique({
+      where: { id: userId },
+      select: { id: true, firstName: true, email: true, hasChangedPassword: true, deletedAt: true },
+    });
+
+    if (!user) {
+      throw new Error(ERROR_MESSAGES.USER_NOT_FOUND);
+    }
+
+    if (user.hasChangedPassword) {
+      throw new Error(ERROR_MESSAGES.SET_PASSWORD_LINK_USED);
+    }
+
+    const token = generateSetPasswordToken(user.id);
+    await sendSetPasswordEmail({
+      email: user.email,
+      firstName: user.firstName,
+      token,
+    });
+
+    return { success: true };
   }
 
   async getAllUsersWithRoles() {
@@ -169,7 +192,9 @@ export class UserService {
         firstName: true,
         lastName: true,
         email: true,
+        specialty: true,
         deletedAt: true,
+        hasChangedPassword: true,
         userRoles: {
           select: {
             role: {
@@ -187,7 +212,9 @@ export class UserService {
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
+      specialty: (user as any).specialty ?? null,
       deletedAt: user.deletedAt,
+      hasChangedPassword: user.hasChangedPassword,
       roles: user.userRoles.map((ur) => ur.role.name),
     }));
   }
@@ -207,6 +234,8 @@ export class UserService {
         firstName: true,
         lastName: true,
         email: true,
+        specialty: true,
+        hasChangedPassword: true,
         userRoles: {
           select: { role: { select: { name: true } } },
         },
@@ -226,6 +255,8 @@ export class UserService {
       firstName: u.firstName,
       lastName: u.lastName,
       email: u.email,
+      specialty: u.specialty ?? null,
+      hasChangedPassword: u.hasChangedPassword,
       roles: u.userRoles.map((ur) => ur.role.name),
       assignedTicketCount: u._count.UserTickets,
     }));

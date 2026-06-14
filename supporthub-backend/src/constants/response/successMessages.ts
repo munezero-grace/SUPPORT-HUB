@@ -1,6 +1,8 @@
 export const SUCCESS_MESSAGES = {
   USER_REGISTERED: "User registered successfully.",
   LOGIN_SUCCESS: "Login successful.",
+  PASSWORD_SET_SUCCESS: "Password set successfully. Please log in.",
+  INVITE_SENT: "Invite email sent successfully.",
   PRODUCT_CREATED: "Product created successfully.",
   PRODUCT_UPDATED: "Product updated successfully.",
   PRODUCT_DELETED: "Product deleted successfully.",

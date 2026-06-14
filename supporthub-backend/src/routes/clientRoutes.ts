@@ -15,6 +15,7 @@ const router = Router();
 router.get(
   "/",
   WrapAsync(authenticateUser),
+  WrapAsync(requireRole("super_admin", "ticket_manager")),
   WrapAsync(ClientController.getAllClients)
 );
 router.post(
@@ -32,6 +33,7 @@ router.get(
 router.get(
   "/:id",
   WrapAsync(authenticateUser),
+  WrapAsync(requireRole("super_admin", "ticket_manager")),
   WrapAsync(validateClientId),
   WrapAsync(ClientController.getClientById)
 );
@@ -80,14 +82,14 @@ router.get(
 router.post(
   "/:id/products/:productId",
   WrapAsync(authenticateUser),
-  WrapAsync(requireRole("super_admin")),
+  WrapAsync(requireRole("super_admin", "ticket_manager")),
   WrapAsync(validateClientId),
   WrapAsync(ClientController.addProductToClient)
 );
 router.delete(
   "/:id/products/:productId",
   WrapAsync(authenticateUser),
-  WrapAsync(requireRole("super_admin")),
+  WrapAsync(requireRole("super_admin", "ticket_manager")),
   WrapAsync(validateClientId),
   WrapAsync(ClientController.removeProductFromClient)
 );

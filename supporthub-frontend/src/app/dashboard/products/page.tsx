@@ -63,9 +63,13 @@ export default function ProductsAdminPage() {
   const openClientModal = (product: Product) => {
     setSelectedProduct(product)
 
+    // Each cp from the backend is { id: joinTableId, client: { id, clientCode, ... } }.
+    // We must use cp.client.id (the actual client UUID), not cp.id (the join-table row UUID).
+    type CpWithClient = { id: string; client: ClientResponse }
+
     const initialSelectedClients: Client[] = product.clientProducts
       ? product.clientProducts.map((cp) => {
-          const clientData = cp as unknown as ClientResponse
+          const clientData = (cp as unknown as CpWithClient).client
           return {
             id: String(clientData.id),
             clientCode: clientData.clientCode,
@@ -88,7 +92,7 @@ export default function ProductsAdminPage() {
 
     const initialSelectedProductIds = product.clientProducts
       ? product.clientProducts.map((cp) =>
-          String((cp as unknown as ClientResponse).id)
+          String((cp as unknown as CpWithClient).client.id)
         )
       : []
     setSelectedProductIds(initialSelectedProductIds)
