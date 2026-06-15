@@ -247,11 +247,8 @@ class AuthController {
 
   public googleSignIn = async (req: Request, res: Response) => {
     const { email, firstName, lastName, provider, providerId } = req.body;
-    let user = await prisma.users.findUnique({
-      where: {
-        email,
-        providerId,
-      },
+    let user = await prisma.users.findFirst({
+      where: { email },
       select: {
         ...userSelectFields,
         Clients: {
@@ -320,6 +317,12 @@ class AuthController {
         }
 
         return newUser;
+      });
+    } else {
+      // Existing user: sync Google provider so future lookups are consistent
+      await prisma.users.update({
+        where: { id: user.id },
+        data: { provider: 'google', providerId },
       });
     }
 
