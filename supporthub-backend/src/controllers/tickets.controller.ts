@@ -244,6 +244,7 @@ class TicketsController {
     try {
       const tickets = await prisma.tickets.findMany({
         where: {
+          deletedAt: null,
           status: { in: ["new", "in_progress", "assigned", "awaiting_client"] },
         },
         orderBy: [{ priorityScore: "desc" }, { createdAt: "desc" }],

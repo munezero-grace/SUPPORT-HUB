@@ -385,12 +385,12 @@ export class TicketsService {
 
       const [unscored, scored] = await Promise.all([
         prisma.tickets.findMany({
-          where: { AND: [accessFilter, unscoredFilter] },
+          where: { AND: [accessFilter, unscoredFilter, { deletedAt: null }] },
           orderBy: [{ createdAt: "desc" }],
           include: ticketListIncludes,
         }),
         prisma.tickets.findMany({
-          where: { AND: [accessFilter, scoredFilter] },
+          where: { AND: [accessFilter, scoredFilter, { deletedAt: null }] },
           orderBy: [{ priorityScore: "desc" }, { createdAt: "desc" }],
           include: ticketListIncludes,
         }),
@@ -405,20 +405,21 @@ export class TicketsService {
   static async getUserTicketsWithOptions(queryOptions: any) {
     return await prisma.tickets.findMany({
       ...queryOptions,
+      where: { ...(queryOptions.where ?? {}), deletedAt: null },
       include: ticketListIncludes,
     });
   }
 
   static async getTicketById(id: string) {
-    return await prisma.tickets.findUnique({
-      where: { id },
+    return await prisma.tickets.findFirst({
+      where: { id, deletedAt: null },
       include: ticketIncludes,
     });
   }
 
   static async getTicketByCode(ticketCode: string) {
-    const ticket = await prisma.tickets.findUnique({
-      where: { ticketCode },
+    const ticket = await prisma.tickets.findFirst({
+      where: { ticketCode, deletedAt: null },
       include: ticketIncludes,
     });
     if (!ticket) {
@@ -440,8 +441,9 @@ export class TicketsService {
   }
 
   static async deleteTicket(id: string) {
-    return await prisma.tickets.delete({
+    return await prisma.tickets.update({
       where: { id },
+      data: { deletedAt: new Date() },
     });
   }
 
@@ -456,12 +458,12 @@ export class TicketsService {
 
     const [unscored, scored] = await Promise.all([
       prisma.tickets.findMany({
-        where: unscoredFilter,
+        where: { AND: [unscoredFilter, { deletedAt: null }] },
         orderBy: [{ createdAt: "desc" }],
         include: ticketListIncludes,
       }),
       prisma.tickets.findMany({
-        where: scoredFilter,
+        where: { AND: [scoredFilter, { deletedAt: null }] },
         orderBy: [{ priorityScore: "desc" }, { createdAt: "desc" }],
         include: ticketListIncludes,
       }),
@@ -473,28 +475,29 @@ export class TicketsService {
   static async getTicketsCounts() {
     const [total, open, newTickets, inProgress, assigned, awaiting, resolved] =
       await Promise.all([
-        prisma.tickets.count(),
+        prisma.tickets.count({ where: { deletedAt: null } }),
         prisma.tickets.count({
           where: {
+            deletedAt: null,
             status: {
               in: ["new", "in_progress", "assigned", "awaiting_client"],
             },
           },
         }),
         prisma.tickets.count({
-          where: { status: "new" },
+          where: { deletedAt: null, status: "new" },
         }),
         prisma.tickets.count({
-          where: { status: "in_progress" },
+          where: { deletedAt: null, status: "in_progress" },
         }),
         prisma.tickets.count({
-          where: { status: "assigned" },
+          where: { deletedAt: null, status: "assigned" },
         }),
         prisma.tickets.count({
-          where: { status: "awaiting_client" },
+          where: { deletedAt: null, status: "awaiting_client" },
         }),
         prisma.tickets.count({
-          where: { status: "resolved" },
+          where: { deletedAt: null, status: "resolved" },
         }),
       ]);
 
@@ -597,12 +600,12 @@ export class TicketsService {
 
     const [unscored, scored] = await Promise.all([
       prisma.tickets.findMany({
-        where: { AND: [accessFilter, unscoredFilter] },
+        where: { AND: [accessFilter, unscoredFilter, { deletedAt: null }] },
         orderBy: [{ createdAt: "desc" }],
         include: ticketListIncludes,
       }),
       prisma.tickets.findMany({
-        where: { AND: [accessFilter, scoredFilter] },
+        where: { AND: [accessFilter, scoredFilter, { deletedAt: null }] },
         orderBy: [{ priorityScore: "desc" }, { createdAt: "desc" }],
         include: ticketListIncludes,
       }),
@@ -755,7 +758,7 @@ export class TicketsService {
   }
 
   static async addComment(ticketId: string, userId: string, text: string) {
-    const ticket = await prisma.tickets.findUnique({ where: { id: ticketId } });
+    const ticket = await prisma.tickets.findFirst({ where: { id: ticketId, deletedAt: null } });
     if (!ticket) return { error: ERROR_MESSAGES.TICKET_NOT_FOUND };
     const comment = await prisma.ticketComment.create({
       data: { ticketId, userId, text },
@@ -775,7 +778,7 @@ export class TicketsService {
   }
 
   static async addNote(ticketId: string, userId: string, text: string) {
-    const ticket = await prisma.tickets.findUnique({ where: { id: ticketId } });
+    const ticket = await prisma.tickets.findFirst({ where: { id: ticketId, deletedAt: null } });
     if (!ticket) return { error: ERROR_MESSAGES.TICKET_NOT_FOUND };
     const note = await prisma.ticketNote.create({
       data: { ticketId, userId, text },
@@ -786,7 +789,7 @@ export class TicketsService {
 
   static async getDeveloperAssignedTickets(userId: string) {
     const assignments = await prisma.userTickets.findMany({
-      where: { userId },
+      where: { userId, ticket: { deletedAt: null } },
       include: {
         ticket: {
           include: {
@@ -806,7 +809,7 @@ export class TicketsService {
   }
 
   static async assignTicket(ticketId: string, assigneeId: string, _assignedBy: string, deadline?: string) {
-    const ticket = await prisma.tickets.findUnique({ where: { id: ticketId } });
+    const ticket = await prisma.tickets.findFirst({ where: { id: ticketId, deletedAt: null } });
     if (!ticket) return { error: ERROR_MESSAGES.TICKET_NOT_FOUND };
 
     const assignee = await prisma.users.findUnique({ where: { id: assigneeId, deletedAt: null } });
