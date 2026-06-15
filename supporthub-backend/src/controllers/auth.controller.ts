@@ -106,7 +106,7 @@ class AuthController {
       email: findUser.email,
       role: role?.name as UserRole,
       provider: "credentials",
-      providerId: "seeded-superadmin",
+      providerId: findUser.id,
       client:
         client && !client.deletedAt
           ? {
