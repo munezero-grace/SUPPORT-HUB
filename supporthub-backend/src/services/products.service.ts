@@ -34,7 +34,7 @@ export class ProductsService {
   async getAllProducts(): Promise<ProductsResponse> {
     try {
       const products = await prisma.products.findMany({
-        orderBy: [{ productCode: 'desc' }],
+        orderBy: [{ productCode: 'asc' }],
         include: {
           clientProducts: {
             include: {
@@ -221,7 +221,7 @@ export class ProductsService {
             }
           }
         },
-        orderBy: [{ productCode: 'desc' }]
+        orderBy: [{ productCode: 'asc' }]
       });
 
       return products;
