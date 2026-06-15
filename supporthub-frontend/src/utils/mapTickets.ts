@@ -27,6 +27,7 @@ export function mapTickets(tickets: Record<string, unknown>[]): Ticket[] {
             ? {
                 id: (ticket.product as Record<string, unknown>).id as string,
                 name: (ticket.product as Record<string, unknown>).name as string,
+                productCode: (ticket.product as Record<string, unknown>).productCode as string | undefined,
             }
             : ticket.product as string,
         contactName: ticket.contactName as string | undefined,

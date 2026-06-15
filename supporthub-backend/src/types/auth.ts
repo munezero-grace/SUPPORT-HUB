@@ -33,6 +33,7 @@ export interface AuthPayload {
   role: string;
   provider?: string;
   providerId?: string;
+  hasChangedPassword?: boolean;
   client?: {
     id: string;
     clientCode: string;

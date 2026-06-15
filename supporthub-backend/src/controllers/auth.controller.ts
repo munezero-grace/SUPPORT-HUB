@@ -359,6 +359,7 @@ class AuthController {
       role: role?.name as UserRole,
       provider: provider || undefined,
       providerId: providerId || undefined,
+      hasChangedPassword: user.hasChangedPassword ?? true,
       client:
         client && !client.deletedAt
           ? {

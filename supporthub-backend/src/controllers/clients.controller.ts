@@ -184,7 +184,7 @@ export class ClientController {
       return res.status(HTTP_NO_CONTENT).send();
     } catch (error: any) {
       return res.status(HTTP_BAD_REQUEST).json({
-        error: error.message,
+        message: error.message,
       });
     }
   }

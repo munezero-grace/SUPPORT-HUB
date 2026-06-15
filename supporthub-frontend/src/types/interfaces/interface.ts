@@ -67,6 +67,7 @@ export interface Ticket {
   product?: string | {
     id: string;
     name: string;
+    productCode?: string;
   };
   contactName?: string;
   contactEmail?: string;

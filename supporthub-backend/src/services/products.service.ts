@@ -175,6 +175,14 @@ export class ProductsService {
   }
 
   async removeClientFromProduct(productId: string, clientId: string) {
+    const productCount = await prisma.clientProduct.count({
+      where: { clientId },
+    });
+    if (productCount <= 1) {
+      throw new Error(
+        "Cannot remove the last product from a client. A client must have at least one product."
+      );
+    }
     return prisma.clientProduct.delete({
       where: {
         clientId_productId: {

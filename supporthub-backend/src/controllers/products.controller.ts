@@ -254,10 +254,14 @@ export default class ProductsController {
     req: Request,
     res: Response
   ): Promise<Response> {
-    const { productId, clientId } = req.params;
-    await productService.removeClientFromProduct(productId, clientId);
-    return res
-      .status(HTTP_OK)
-      .json({ message: SUCCESS_MESSAGES.CLIENT_REMOVED_FROM_PRODUCT });
+    try {
+      const { productId, clientId } = req.params;
+      await productService.removeClientFromProduct(productId, clientId);
+      return res
+        .status(HTTP_OK)
+        .json({ message: SUCCESS_MESSAGES.CLIENT_REMOVED_FROM_PRODUCT });
+    } catch (error: any) {
+      return res.status(HTTP_BAD_REQUEST).json({ message: error.message });
+    }
   }
 }

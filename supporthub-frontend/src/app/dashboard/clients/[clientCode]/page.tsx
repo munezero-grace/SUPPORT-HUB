@@ -124,8 +124,9 @@ export default function ClientDetailsPage() {
       queryClient.invalidateQueries({ queryKey: ['client', clientCode] })
       toast.success(`${confirmRemove.name} removed`)
       setConfirmRemove(null)
-    } catch {
-      toast.error('Failed to remove product')
+    } catch (error) {
+      const err = error as { response?: { data?: { message?: string } } }
+      toast.error(err?.response?.data?.message || 'Failed to remove product')
     } finally {
       setIsRemoving(false)
     }

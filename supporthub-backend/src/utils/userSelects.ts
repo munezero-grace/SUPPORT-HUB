@@ -8,6 +8,7 @@ export const userSelectFields = {
   createdAt: true,
   provider: true,
   providerId: true,
+  hasChangedPassword: true,
   password: false,
   updatedAt: false,
   

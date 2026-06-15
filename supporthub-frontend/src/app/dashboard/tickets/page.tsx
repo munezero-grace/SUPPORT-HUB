@@ -35,6 +35,7 @@ export default function TicketsPage() {
     status: searchParams.get('status') ?? '',
     priority: '',
     client: searchParams.get('client') ?? '',
+    product: searchParams.get('product') ?? '',
     category: '',
   })
   const [sortByScore, setSortByScore] = useState<'none' | 'desc' | 'asc'>('desc')
@@ -123,11 +124,16 @@ export default function TicketsPage() {
       (typeof ticket.client === 'object' &&
         ticket.client?.clientCode === filterValues.client)
 
+    const matchesProduct =
+      !filterValues.product ||
+      (typeof ticket.product === 'object' &&
+        ticket.product?.productCode === filterValues.product)
+
     const matchesCategory =
       !filterValues.category ||
       ticket.tags?.includes(filterValues.category)
 
-    return matchesSearch && matchesStatus && matchesPriority && matchesClient && matchesCategory
+    return matchesSearch && matchesStatus && matchesPriority && matchesClient && matchesProduct && matchesCategory
   })
 
   const PRIORITY_TIER: Record<string, number> = { critical: 3, high: 2, medium: 1, low: 0 }
@@ -285,6 +291,18 @@ export default function TicketsPage() {
             <span>Showing tickets for client: <strong>{filterValues.client}</strong></span>
             <button
               onClick={() => setFilterValues((prev) => ({ ...prev, client: '' }))}
+              className="text-blue-600 hover:text-blue-800 font-medium ml-4"
+            >
+              Clear filter
+            </button>
+          </div>
+        )}
+
+        {filterValues.product && (
+          <div className="px-4 py-2 bg-blue-50 border-t border-blue-100 flex items-center justify-between text-sm text-blue-800">
+            <span>Showing tickets for product: <strong>{filterValues.product}</strong></span>
+            <button
+              onClick={() => setFilterValues((prev) => ({ ...prev, product: '' }))}
               className="text-blue-600 hover:text-blue-800 font-medium ml-4"
             >
               Clear filter

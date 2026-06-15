@@ -10,7 +10,8 @@ export default withAuth(
     if (!isAuthenticated && (
       req.nextUrl.pathname.startsWith('/dashboard') ||
       req.nextUrl.pathname.startsWith('/products') ||
-      req.nextUrl.pathname.startsWith('/clients')
+      req.nextUrl.pathname.startsWith('/clients') ||
+      req.nextUrl.pathname === '/set-password'
     )) {
       return NextResponse.redirect(new URL('/', req.url))
     }
@@ -55,5 +56,5 @@ export default withAuth(
 )
 
 export const config = {
-  matcher: ['/', '/dashboard/:path*', '/products/:path*']
+  matcher: ['/', '/dashboard/:path*', '/products/:path*', '/clients/:path*', '/set-password']
 }

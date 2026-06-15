@@ -133,7 +133,7 @@ export const createProductHandlers = ({
             {
               label: 'View Details',
               onClick: () => {
-                window.location.href = `/dashboard/products/${product.id}`;
+                window.location.href = `/dashboard/products/${product.productCode}`;
               },
             },
             ...(isAdmin ? [
@@ -151,7 +151,9 @@ export const createProductHandlers = ({
             ] : []),
             {
               label: 'View Tickets',
-              onClick: () => {},
+              onClick: () => {
+                window.location.href = `/dashboard/tickets?product=${product.productCode}`
+              },
             },
             ...(isAdmin ? [
               {
