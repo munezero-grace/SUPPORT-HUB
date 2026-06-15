@@ -11,10 +11,7 @@ import {
   ticketListIncludes,
 } from "../utils/ticketPrismaIncludes";
 import { uploadTicketFiles } from "../helpers/ticketFileHelper";
-import {
-  buildSlackStatusChangeMessage,
-  buildSlackNewTicketMessage,
-} from "../helpers/slackHelper";
+import { buildSlackNewTicketMessage } from "../helpers/slackHelper";
 import SettingsService from "./settings.service";
 import {
   throwIfTicketNotFound,
@@ -703,29 +700,6 @@ export class TicketsService {
             : await TicketsService.getTicketById(id);
 
         if ("status" in body) {
-          try {
-            const adminSettings = await SettingsService.getAdminSlackSettings();
-            if (adminSettings && adminSettings.statusChanges && adminSettings.slackWebhookUrl) {
-              const userService = new (require("../services/user.service").UserService)();
-              const updater = await userService.getUserById(user?.id);
-              const userName = updater ? `${updater.firstName} ${updater.lastName}` : "Unknown";
-              const oldStatus = oldTicket ? oldTicket.status : "Unknown";
-              const fullTicket = await TicketsService.getTicketById(id);
-              if (fullTicket) {
-                const slackMessage = buildSlackStatusChangeMessage(
-                  fullTicket.title || "Unknown",
-                  fullTicket.ticketCode || "Unknown",
-                  oldStatus,
-                  body.status,
-                  userName
-                );
-                await sendSlackNotification(slackMessage, adminSettings.userId);
-              }
-            }
-          } catch (slackError) {
-            console.error("Slack status notification error:", slackError);
-          }
-
           // In-app DB notifications for status change (client + admins)
           try {
             const tc = oldTicket?.ticketCode ?? "";
@@ -866,17 +840,6 @@ export class TicketsService {
       });
     } catch (e) {
       console.error("Assignment notification error:", e);
-    }
-
-    // Slack notification (non-blocking)
-    try {
-      const adminSettings = await SettingsService.getAdminSlackSettings();
-      if (adminSettings?.slackWebhookUrl && adminSettings.ticketAssignments) {
-        const message = `🔧 *Ticket Assigned*\n*Ticket:* ${ticket.ticketCode} — ${ticket.title}\n*Assigned to:* ${assignee.firstName} ${assignee.lastName}\n*Status:* assigned`;
-        await sendSlackNotification(message, adminSettings.userId);
-      }
-    } catch (e) {
-      console.error("Slack assignment notification error:", e);
     }
 
     return { data: updated };
