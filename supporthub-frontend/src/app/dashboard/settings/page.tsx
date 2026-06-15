@@ -1,15 +1,26 @@
 'use client'
 import React, { useState } from 'react'
 import { useSession } from 'next-auth/react'
+import { useSearchParams } from 'next/navigation'
 import GeneralSettings from '@/components/settings/GeneralSettings'
 import IntegrationsSettings from '@/components/settings/IntegrationsSettings'
 import UsersSettings from '@/components/settings/UsersSettings'
 
+const TAB_MAP: Record<string, string> = {
+  general: 'General',
+  integrations: 'Integrations',
+  users: 'Users',
+}
+
 const SettingsPage = () => {
   const { data: session } = useSession()
   const isAdmin = session?.user?.role === 'super_admin'
+  const searchParams = useSearchParams()
 
-  const [activeTab, setActiveTab] = useState('General')
+  const [activeTab, setActiveTab] = useState(() => {
+    const param = searchParams.get('tab')?.toLowerCase() ?? ''
+    return TAB_MAP[param] ?? 'General'
+  })
 
   const tabs = isAdmin
     ? [

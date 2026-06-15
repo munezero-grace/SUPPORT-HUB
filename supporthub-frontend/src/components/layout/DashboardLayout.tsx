@@ -237,17 +237,21 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     </div>
                   </div>
                   <Link
-                    href="/dashboard/settings"
+                    href="/dashboard/settings?tab=general"
                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    onClick={() => setShowProfileMenu(false)}
                   >
                     Profile
                   </Link>
-                  <Link
-                    href="/dashboard/settings"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    Settings
-                  </Link>
+                  {isAdmin && (
+                    <Link
+                      href="/dashboard/settings?tab=integrations"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      onClick={() => setShowProfileMenu(false)}
+                    >
+                      Settings
+                    </Link>
+                  )}
                   <button
                     onClick={() => signOut({ callbackUrl: '/' })}
                     className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
