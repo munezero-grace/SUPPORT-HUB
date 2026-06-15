@@ -3,7 +3,7 @@ __pycache__/
 *.pyc
 *.pyo
 .env
-models/*.pkl
+# models/*.pkl  # removed: model files must be committed for Render deployment
 data/raw/
 data/processed/
 *.egg-info/
