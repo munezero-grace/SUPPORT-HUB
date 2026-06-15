@@ -7,6 +7,7 @@ interface ActionItem {
   icon?: React.ComponentType<{ className?: string }>;
   onClick: () => void;
   variant?: 'default' | 'danger';
+  divider?: boolean;
 }
 
 interface ActionMenuProps {
@@ -82,22 +83,23 @@ export function ActionMenu({ items, className }: ActionMenuProps) {
               Actions
             </div>
             {items.map((item, index) => (
-              <button
-                type="button"
-                key={index}
-                onClick={() => {
-                  item.onClick();
-                  setIsOpen(false);
-                }}
-                className={cn(
-                  'w-full text-left px-3 py-2 text-sm hover:bg-gray-50',
-                  'text-gray-700 flex items-center gap-2',
-                  item.variant === 'danger' && 'text-gray-700 hover:bg-gray-50'
-                )}
-              >
-                {item.icon && <item.icon className="w-4 h-4" />}
-                {item.label}
-              </button>
+              <div key={index}>
+                {item.divider && <hr className="my-1 border-gray-100" />}
+                <button
+                  type="button"
+                  onClick={() => {
+                    item.onClick();
+                    setIsOpen(false);
+                  }}
+                  className={cn(
+                    'w-full text-left px-3 py-2 text-sm hover:bg-gray-50 flex items-center gap-2',
+                    item.variant === 'danger' ? 'text-red-600 hover:bg-red-50' : 'text-gray-700'
+                  )}
+                >
+                  {item.icon && <item.icon className="w-4 h-4" />}
+                  {item.label}
+                </button>
+              </div>
             ))}
           </div>
         </div>

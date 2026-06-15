@@ -264,6 +264,49 @@ export class UserService {
     }));
   }
 
+  async updateUserById(userId: string, data: { firstName: string; lastName: string; role: string }) {
+    const { firstName, lastName, role } = data;
+
+    const user = await prisma.users.findUnique({
+      where: { id: userId },
+      include: { userRoles: { include: { role: true } } },
+    });
+    if (!user) throw new Error(ERROR_MESSAGES.USER_NOT_FOUND);
+
+    const currentRole = user.userRoles[0]?.role.name as string | undefined;
+
+    await prisma.$transaction(async (tx) => {
+      await tx.users.update({ where: { id: userId }, data: { firstName, lastName } });
+
+      if (role !== currentRole) {
+        await tx.userRoles.deleteMany({ where: { userId } });
+
+        let roleRecord = await tx.roles.findUnique({ where: { name: role as UserRoleEnum } });
+        if (!roleRecord) {
+          roleRecord = await tx.roles.create({ data: { name: role as UserRoleEnum } });
+        }
+        await tx.userRoles.create({ data: { userId, roleId: roleRecord.id } });
+      }
+    });
+
+    return { success: true };
+  }
+
+  async resetPassword(userId: string) {
+    const user = await prisma.users.findUnique({
+      where: { id: userId },
+      select: { id: true, firstName: true, email: true },
+    });
+    if (!user) throw new Error(ERROR_MESSAGES.USER_NOT_FOUND);
+
+    await prisma.users.update({ where: { id: userId }, data: { hasChangedPassword: false } });
+
+    const token = generateSetPasswordToken(user.id);
+    await sendSetPasswordEmail({ email: user.email, firstName: user.firstName, token });
+
+    return { success: true };
+  }
+
   async reactivateUser(userId: string) {
     try {
       const user = await prisma.users.findUnique({ where: { id: userId } });

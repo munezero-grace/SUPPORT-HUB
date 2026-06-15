@@ -81,4 +81,25 @@ router.post(
   WrapAsync(UsersController.resendInvite)
 );
 
+router.put(
+  "/:id",
+  WrapAsync(authenticateUser),
+  WrapAsync(requireRole("super_admin")),
+  WrapAsync(UsersController.updateUserById)
+);
+
+router.post(
+  "/:id/reset-password",
+  WrapAsync(authenticateUser),
+  WrapAsync(requireRole("super_admin")),
+  WrapAsync(UsersController.resetPassword)
+);
+
+router.delete(
+  "/:id",
+  WrapAsync(authenticateUser),
+  WrapAsync(requireRole("super_admin")),
+  WrapAsync(UsersController.hardDeleteUser)
+);
+
 export default router;

@@ -30,4 +30,16 @@ export const userService = {
     const response = await axiosInstance.get('/users/team')
     return response.data.data
   },
+  async update(userId: string, data: { firstName: string; lastName: string; role: string }) {
+    const response = await axiosInstance.put(`/users/${userId}`, data)
+    return response.data
+  },
+  async resetPassword(userId: string) {
+    const response = await axiosInstance.post(`/users/${userId}/reset-password`)
+    return response.data
+  },
+  async hardDelete(userId: string) {
+    const response = await axiosInstance.delete(`/users/${userId}`)
+    return response.data
+  },
 }

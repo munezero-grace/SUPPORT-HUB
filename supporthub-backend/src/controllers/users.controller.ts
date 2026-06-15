@@ -144,6 +144,47 @@ class UsersController {
     }
   }
 
+  static async updateUserById(req: Request, res: Response): Promise<Response> {
+    try {
+      const { id } = req.params;
+      const { firstName, lastName, role } = req.body;
+
+      if (!firstName?.trim() || !lastName?.trim() || !role) {
+        return res.status(HTTP_BAD_REQUEST).json({ error: "firstName, lastName, and role are required" });
+      }
+
+      const validRoles = ["super_admin", "ticket_manager", "developer", "client"];
+      if (!validRoles.includes(role)) {
+        return res.status(HTTP_BAD_REQUEST).json({ error: "Invalid role" });
+      }
+
+      await userService.updateUserById(id, { firstName: firstName.trim(), lastName: lastName.trim(), role });
+      return res.status(HTTP_OK).json({ message: "User updated successfully" });
+    } catch (error: any) {
+      return res.status(HTTP_BAD_REQUEST).json({ error: error.message || "Failed to update user" });
+    }
+  }
+
+  static async resetPassword(req: Request, res: Response): Promise<Response> {
+    try {
+      const { id } = req.params;
+      await userService.resetPassword(id);
+      return res.status(HTTP_OK).json({ message: "Password reset email sent successfully" });
+    } catch (error: any) {
+      return res.status(HTTP_BAD_REQUEST).json({ error: error.message || "Failed to reset password" });
+    }
+  }
+
+  static async hardDeleteUser(req: Request, res: Response): Promise<Response> {
+    try {
+      const { id } = req.params;
+      const result = await userService.deleteUser(id);
+      return res.status(HTTP_OK).json({ message: result.message });
+    } catch (error: any) {
+      return res.status(HTTP_BAD_REQUEST).json({ error: error.message || ERROR_MESSAGES.USER_DELETE_FAILED });
+    }
+  }
+
   static async resendInvite(req: Request, res: Response): Promise<Response> {
     try {
       const userId = req.params.id;
