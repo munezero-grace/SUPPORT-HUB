@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect } from 'react'
+import React, { Suspense, useEffect } from 'react'
 import BPTicketLogin from './ClientLogin'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
@@ -26,7 +26,9 @@ const LoginClientWrapper = () => {
 
   return (
     <>
-      <BPTicketLogin />
+      <Suspense fallback={null}>
+        <BPTicketLogin />
+      </Suspense>
       <ToastContainer />
     </>
   )

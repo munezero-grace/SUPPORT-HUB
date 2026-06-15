@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server'
 export default withAuth(
   function middleware(req) {
     const token = req.nextauth.token
-    const isAuthenticated = !!token && !!token.accessToken
+    const isAuthenticated = !!token?.accessToken && token.accessToken !== ''
     const isSuperAdmin = token?.role === 'super_admin'
 
     if (!isAuthenticated && (

@@ -35,8 +35,12 @@ export interface GoogleProfile {
   sub: string
   name: string
   email: string
+  firstName?: string
+  lastName?: string
   picture?: string
   role?: string
+  providerId?: string
+  provider?: string
 }
 
 export interface ExtendedAxiosRequestConfig extends AxiosRequestConfig {
