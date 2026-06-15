@@ -2,6 +2,7 @@
 
 import { signIn } from 'next-auth/react'
 import { useState, FormEvent } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Head from 'next/head'
 import Image from 'next/image'
 
@@ -11,6 +12,9 @@ const BPTicketLogin: React.FC = () => {
   const [rememberMe, setRememberMe] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+
+  const searchParams = useSearchParams()
+  const urlError = searchParams.get('error')
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -70,6 +74,12 @@ const BPTicketLogin: React.FC = () => {
             <p className="text-sm text-gray-400 mb-6">
               Enter your credentials to continue
             </p>
+
+            {urlError === 'AccountNotFound' && (
+              <div className="rounded-md bg-red-50 border border-red-200 p-3 mb-4 text-red-700 text-sm">
+                No account found for this Google email. Please contact your administrator.
+              </div>
+            )}
 
             <form className="space-y-6" onSubmit={handleSubmit}>
               <div>

@@ -6,7 +6,7 @@ import { encode, decode } from 'next-auth/jwt'
 import { socialSignup } from '@/services/auth.service'
 
 import { splitName } from '@/lib/utils'
-import { CustomUser, Client } from '@/types/auth'
+import { CustomUser, Client, GoogleProfile } from '@/types/auth'
 
 const REMEMBER_ME_MAX_AGE = 30 * 24 * 60 * 60  // 30 days
 const DEFAULT_MAX_AGE = 8 * 60 * 60              // 8 hours
@@ -109,14 +109,51 @@ const authOptions: NextAuthOptions = {
   ],
 
   callbacks: {
-    async signIn({ user }) {
+    async signIn({ user, account, profile }) {
+      if (account?.provider === 'google') {
+        try {
+          const gProfile = profile as { sub?: string; name?: string; email?: string }
+          const payload: GoogleProfile = {
+            sub: gProfile?.sub ?? '',
+            name: gProfile?.name ?? '',
+            email: gProfile?.email ?? '',
+            firstName: gProfile?.name ? splitName(gProfile.name).firstName : '',
+            lastName: gProfile?.name ? splitName(gProfile.name).lastName : '',
+            providerId: account.providerAccountId,
+            provider: account.provider,
+          }
+          const data = await socialSignup(payload)
+          if (data?.token) {
+            ;(user as unknown as Record<string, unknown>).backendAuth = data
+            return true
+          }
+          return '/login?error=AccountNotFound'
+        } catch (error) {
+          console.error('[signIn] Google socialSignup failed:', error)
+          return '/login?error=AccountNotFound'
+        }
+      }
       return !!user
     },
 
-    async jwt({ token, user, account, profile }) {
+    async jwt({ token, user, account }) {
       if (user) {
-        const customUser = user as CustomUser
+        const customUser = user as CustomUser & { backendAuth?: { token: string } }
 
+        // Google OAuth path: backendAuth was attached in signIn callback
+        if (customUser.backendAuth?.token) {
+          const base64Payload = customUser.backendAuth.token.split('.')[1]
+          const decodedUser = JSON.parse(
+            Buffer.from(base64Payload, 'base64').toString()
+          )
+          return {
+            ...token,
+            ...decodedUser,
+            accessToken: customUser.backendAuth.token,
+          }
+        }
+
+        // Credentials path
         token.id = customUser.id
         token.role = customUser.role || 'user'
         token.accessToken = customUser.token || token.accessToken || ''
@@ -135,39 +172,6 @@ const authOptions: NextAuthOptions = {
           }`.trim()
         } else if (customUser.name) {
           token.name = customUser.name
-        }
-      }
-
-      // Google login handling
-      if (account?.provider === 'google') {
-        const payload = {
-          sub: profile?.sub ?? '',
-          name: profile?.name ?? '',
-          email: profile?.email ?? '',
-          firstName: profile?.name ? splitName(profile.name).firstName : '',
-          lastName: profile?.name ? splitName(profile.name).lastName : '',
-          providerId: account.providerAccountId,
-          provider: account.provider,
-        }
-
-        try {
-          const data = await socialSignup(payload)
-
-          if (data.token) {
-            const base64Payload = data.token.split('.')[1]
-            const decodedUser = JSON.parse(
-              Buffer.from(base64Payload, 'base64').toString()
-            )
-
-            return {
-              ...token,
-              ...decodedUser,
-              accessToken: data.token,
-            }
-          }
-        } catch (error) {
-          console.error('Error in social signup:', error)
-          return token
         }
       }
 
