@@ -25,6 +25,26 @@ import { scoreTicket } from "./priority.service";
 const prisma = new PrismaClient();
 const clientService = new ClientService();
 
+function calculateDueDate(priority: string, createdAt: Date): Date {
+  const due = new Date(createdAt)
+  switch (priority.toLowerCase()) {
+    case 'critical':
+      due.setHours(due.getHours() + 4)
+      break
+    case 'high':
+      due.setDate(due.getDate() + 1)
+      break
+    case 'medium':
+      due.setDate(due.getDate() + 3)
+      break
+    case 'low':
+    default:
+      due.setDate(due.getDate() + 7)
+      break
+  }
+  return due
+}
+
 function parseTags(tags: string | string[] | undefined): string[] | undefined {
   if (!tags) return undefined;
   if (Array.isArray(tags)) return tags.map((tag) => tag.trim()).filter(Boolean);
@@ -205,11 +225,7 @@ export class TicketsService {
         };
 
         if (options?.setAutoDueDate && !options.manualDueDate) {
-          const hoursUntilDue =
-            score.priorityScore >= 0.75 ? 4 :
-            score.priorityScore >= 0.5  ? 24 :
-            score.priorityScore >= 0.25 ? 72 : 168;
-          data.dueDate = new Date(Date.now() + hoursUntilDue * 3600_000);
+          data.dueDate = calculateDueDate(score.priority, ticket.createdAt);
         }
 
         await prisma.tickets.update({ where: { id: ticket.id }, data });
