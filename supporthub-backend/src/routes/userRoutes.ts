@@ -1,8 +1,20 @@
 import express from "express";
+import multer from "multer";
 import UsersController from "../controllers/users.controller";
 import { authenticateUser } from "../middlewares/authenticateUser";
 import { WrapAsync } from "../middlewares/wrapAsync";
 import { requireRole } from "../middlewares/requireRole";
+
+const avatarUpload = multer({
+  dest: "uploads/",
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (!file.mimetype.startsWith("image/")) {
+      return cb(new Error("Only image files are allowed"));
+    }
+    cb(null, true);
+  },
+});
 
 const router = express.Router();
 
@@ -35,6 +47,13 @@ router.put(
   "/profile",
   WrapAsync(authenticateUser),
   WrapAsync(UsersController.updateUserProfile)
+);
+
+router.post(
+  "/profile/picture",
+  WrapAsync(authenticateUser),
+  avatarUpload.single("profilePicture"),
+  WrapAsync(UsersController.uploadProfilePicture)
 );
 
 router.put(

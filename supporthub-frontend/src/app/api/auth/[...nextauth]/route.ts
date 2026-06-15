@@ -136,7 +136,12 @@ const authOptions: NextAuthOptions = {
       return !!user
     },
 
-    async jwt({ token, user, account }) {
+    async jwt({ token, user, account, trigger, session: sessionData }) {
+      if (trigger === 'update' && sessionData?.image !== undefined) {
+        token.picture = sessionData.image
+        return token
+      }
+
       if (user) {
         const customUser = user as CustomUser & { backendAuth?: { token: string } }
 
@@ -190,6 +195,7 @@ const authOptions: NextAuthOptions = {
         session.user.name = (token.name as string) || ''
         session.user.client = token.client as Client | undefined
         session.user.hasChangedPassword = token.hasChangedPassword as boolean
+        session.user.image = (token.picture as string) ?? null
       }
       return session
     },

@@ -1,4 +1,5 @@
 import { PrismaClient, UserRoleEnum } from "@prisma/client";
+import fs from "fs/promises";
 import { HTTP_BAD_REQUEST } from "../constants/httpStatusCodes";
 import { ERROR_MESSAGES } from "../constants/response/errors";
 import { SUCCESS_MESSAGES } from "../constants/response/successMessages";
@@ -6,6 +7,7 @@ import { SignupRequestBody } from "../types/auth";
 import { UserCompanyProfile } from "../types/client";
 import { sendSetPasswordEmail } from "../helpers/emailHelper";
 import { generateSetPasswordToken } from "../helpers/setPasswordToken";
+import cloudinary from "../utils/cloudinary";
 
 const prisma = new PrismaClient();
 
@@ -334,6 +336,7 @@ export class UserService {
           firstName: true,
           lastName: true,
           email: true,
+          profilePicture: true,
           createdAt: true,
           userRoles: {
             select: {
@@ -367,15 +370,15 @@ export class UserService {
     }
   }
 
-  async updateUserProfile(userId: string, data: SignupRequestBody) {
+  async updateUserProfile(userId: string, data: SignupRequestBody & { profilePicture?: string }) {
     try {
-      
-      const { firstName, lastName, email, password } = data;
+      const { firstName, lastName, email, password, profilePicture } = data;
       const updateData: any = {};
       if (firstName !== undefined) updateData.firstName = firstName;
       if (lastName !== undefined) updateData.lastName = lastName;
       if (email !== undefined) updateData.email = email;
       if (password !== undefined) updateData.password = password;
+      if (profilePicture !== undefined) updateData.profilePicture = profilePicture;
 
       const updatedUser = await prisma.users.update({
         where: { id: userId },
@@ -389,6 +392,27 @@ export class UserService {
         message: error instanceof Error ?
           error.message :
           ERROR_MESSAGES.USER_DELETE_FAILED,
+      };
+    }
+  }
+
+  async uploadProfilePicture(userId: string, filePath: string): Promise<string> {
+    try {
+      const result = await cloudinary.uploader.upload(filePath, { folder: "avatars" });
+      await fs.unlink(filePath).catch(() => {});
+
+      const profilePicture = result.secure_url;
+      await prisma.users.update({
+        where: { id: userId },
+        data: { profilePicture } as any,
+      });
+
+      return profilePicture;
+    } catch (error) {
+      await fs.unlink(filePath).catch(() => {});
+      throw {
+        status: HTTP_BAD_REQUEST,
+        message: error instanceof Error ? error.message : "Failed to upload profile picture",
       };
     }
   }

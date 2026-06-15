@@ -13,6 +13,13 @@ export const updateUserProfile = async (data: Partial<User>) => {
   return response.data
 }
 
+export const uploadProfilePicture = async (file: File) => {
+  const formData = new FormData()
+  formData.append('profilePicture', file)
+  const response = await axiosInstance.post('/users/profile/picture', formData)
+  return response.data
+}
+
 export const updateUserCompanyProfile = async (
   data: Partial<UserCompanyProfile>
 ) => {

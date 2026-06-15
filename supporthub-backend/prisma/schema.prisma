@@ -25,6 +25,7 @@ model Users {
   providerId          String?
   hasChangedPassword  Boolean              @default(false)
   specialty           String?
+  profilePicture      String?
   userRoles           UserRoles[]
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt

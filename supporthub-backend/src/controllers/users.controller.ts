@@ -49,6 +49,24 @@ class UsersController {
     }
   }
 
+  static async uploadProfilePicture(req: Request, res: Response): Promise<Response> {
+    try {
+      const userId = req.user?.id!;
+      if (!req.file) {
+        return res.status(HTTP_BAD_REQUEST).json({ error: "No file uploaded" });
+      }
+      const profilePicture = await userService.uploadProfilePicture(userId, req.file.path);
+      return res.status(HTTP_OK).json({
+        message: "Profile picture updated successfully",
+        data: { profilePicture },
+      });
+    } catch (error: any) {
+      return res.status(HTTP_BAD_REQUEST).json({
+        error: error.message || "Failed to upload profile picture",
+      });
+    }
+  }
+
   static async updateUserCompanyProfile(req: Request, res: Response): Promise<Response> {
     try {
       const userId = req.user?.id!;
