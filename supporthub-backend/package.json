@@ -22,7 +22,7 @@
     "prisma:migrate:dev": "npx prisma migrate dev",
     "prisma:migrate:deploy": "npx prisma migrate deploy",
     "prisma:format:code": "npx prisma format",
-    "prepare": "husky install"
+    "prepare": "node -e \"if(process.env.NODE_ENV !== 'production') { require('child_process').execSync('husky install') }\""
   },
   "keywords": [],
   "author": "",
