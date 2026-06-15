@@ -19,7 +19,7 @@ export const errorHandler = (
 
   if (err instanceof MulterError) {
     return res.status(HTTP_BAD_REQUEST).json({
-      message: MULTER_ERROR_MESSAGES[err.code] || err.message,
+      message: MULTER_ERROR_MESSAGES[(err as any).code] || err.message,
     });
   }
 

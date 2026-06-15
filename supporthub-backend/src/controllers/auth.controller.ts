@@ -40,7 +40,7 @@ class AuthController {
     const token = generateToken({
       id: user.id,
       firstName: user.firstName,
-      lastName: user.lastName,
+      lastName: user.lastName ?? '',
       email: user.email,
       role: UserRole.CLIENT,
     });
@@ -102,7 +102,7 @@ class AuthController {
     const token = generateToken({
       id: findUser.id,
       firstName: findUser.firstName,
-      lastName: findUser.lastName,
+      lastName: findUser.lastName ?? '',
       email: findUser.email,
       role: role?.name as UserRole,
       provider: "credentials",
@@ -351,7 +351,7 @@ class AuthController {
     const token = generateToken({
       id: user.id,
       firstName: user.firstName,
-      lastName: user.lastName,
+      lastName: user.lastName ?? '',
       email: user.email,
       role: role?.name as UserRole,
       provider: provider || undefined,

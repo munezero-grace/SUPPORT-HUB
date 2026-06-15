@@ -125,7 +125,7 @@ const authOptions: NextAuthOptions = {
         token.email = customUser.email || token.email
         token.client = customUser.client || undefined
         token.hasChangedPassword = customUser.hasChangedPassword ?? false
-        token.rememberMe = (customUser as Record<string, unknown>).rememberMe ?? false
+        token.rememberMe = customUser.rememberMe ?? false
 
         if (customUser.contactName) {
           token.name = customUser.contactName

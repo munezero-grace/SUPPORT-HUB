@@ -23,6 +23,7 @@ export interface CustomUser {
   providerId?: string
   client?: Client
   hasChangedPassword?: boolean
+  rememberMe?: boolean
 }
 
 export interface LoginCredentials {

@@ -12,7 +12,6 @@ import {
 } from "../utils/ticketPrismaIncludes";
 import { uploadTicketFiles } from "../helpers/ticketFileHelper";
 import {
-  buildSlackTicketMessage,
   buildSlackStatusChangeMessage,
   buildSlackNewTicketMessage,
 } from "../helpers/slackHelper";
