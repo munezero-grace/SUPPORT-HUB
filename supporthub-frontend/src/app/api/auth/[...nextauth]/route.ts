@@ -150,6 +150,7 @@ const authOptions: NextAuthOptions = {
             ...token,
             ...decodedUser,
             accessToken: customUser.backendAuth.token,
+            hasChangedPassword: decodedUser.hasChangedPassword ?? true,
           }
         }
 

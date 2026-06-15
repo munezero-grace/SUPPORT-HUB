@@ -15,6 +15,14 @@ export default withAuth(
       return NextResponse.redirect(new URL('/', req.url))
     }
 
+    const hasChangedPassword = token?.hasChangedPassword
+    const isSetPasswordPage = req.nextUrl.pathname === '/set-password'
+    const isAuthRoute = req.nextUrl.pathname.startsWith('/api/auth')
+
+    if (isAuthenticated && !hasChangedPassword && !isSetPasswordPage && !isAuthRoute) {
+      return NextResponse.redirect(new URL('/set-password', req.url))
+    }
+
     if (isAuthenticated && req.nextUrl.pathname === '/') {
       return NextResponse.redirect(new URL('/dashboard', req.url))
     }
