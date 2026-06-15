@@ -74,13 +74,13 @@ export const STAFF_ROLES = ['ticket_manager', 'developer', 'super_admin']
 
 export const CATEGORY_OPTIONS: SelectOption[] = [
   { label: 'Select category', value: '' },
-  { label: 'Technical Issue', value: 'Technical Issue' },
+  { label: 'System & Infrastructure', value: 'System & Infrastructure' },
   { label: 'Billing & Payments', value: 'Billing & Payments' },
   { label: 'Account Access', value: 'Account Access' },
-  { label: 'Feature Request', value: 'Feature Request' },
+  { label: 'Data & Reporting', value: 'Data & Reporting' },
   { label: 'Bug Report', value: 'Bug Report' },
+  { label: 'Feature Request', value: 'Feature Request' },
   { label: 'General Inquiry', value: 'General Inquiry' },
-  { label: 'Other', value: 'Other' },
 ]
 
 export interface AdvancedProps {

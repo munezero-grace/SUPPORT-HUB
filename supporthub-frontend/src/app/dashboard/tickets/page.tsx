@@ -10,6 +10,7 @@ import {
   TICKET_STATUS_OPTIONS,
   TICKET_PRIORITY_OPTIONS,
 } from '@/constants/ticketconfig'
+import { CATEGORY_OPTIONS } from '@/types/TicketTypes'
 import CreateTicketModal from '@/components/tickets/CreateTicketModal'
 import EditTicketModal from '@/components/tickets/EditTicketModal'
 import AssignTicketModal from '@/components/tickets/AssignTicketModal'
@@ -34,6 +35,7 @@ export default function TicketsPage() {
     status: searchParams.get('status') ?? '',
     priority: '',
     client: searchParams.get('client') ?? '',
+    category: '',
   })
   const [sortByScore, setSortByScore] = useState<'none' | 'desc' | 'asc'>('desc')
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
@@ -121,7 +123,11 @@ export default function TicketsPage() {
       (typeof ticket.client === 'object' &&
         ticket.client?.clientCode === filterValues.client)
 
-    return matchesSearch && matchesStatus && matchesPriority && matchesClient
+    const matchesCategory =
+      !filterValues.category ||
+      ticket.tags?.includes(filterValues.category)
+
+    return matchesSearch && matchesStatus && matchesPriority && matchesClient && matchesCategory
   })
 
   const PRIORITY_TIER: Record<string, number> = { critical: 3, high: 2, medium: 1, low: 0 }
@@ -259,6 +265,12 @@ export default function TicketsPage() {
                   label: 'Priority',
                   type: 'select',
                   options: TICKET_PRIORITY_OPTIONS,
+                },
+                {
+                  name: 'category',
+                  label: 'Category',
+                  type: 'select',
+                  options: CATEGORY_OPTIONS,
                 },
               ]}
               values={filterValues}
